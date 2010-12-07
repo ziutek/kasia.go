@@ -14,7 +14,12 @@ much simpler.
 
 Kasia is my daughter's name (Polish equivalent of Katie or Kathy).
 
-## How to use it?
+## How to install Kasia.go?
+
+    $ git clone git://github.com/ziutek/kasia.go
+    $ cd kasia.go && make install
+
+## How to use "Kasia.go"?
 
 Kasia's native interface contains one function and three methods:
 
