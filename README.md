@@ -85,11 +85,11 @@ Example:
     // Strict mode rendering
     tpl.Strict = true
 
-    // Render to stdout - template.go way
+    // Render to stdout, template.go way
     err = tpl.Execute(data, os.Stdout)
 
-    // One more time to stdout - mustache.go way
-    err = fmt.Println(tpl.Render(context_data))
+    // One more time, mustache.go way
+    err = fmt.Println(tpl.Render(data))
 
 # Kasia's syntax in examples
 
