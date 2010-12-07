@@ -333,7 +333,7 @@ the output.
 
 ## Subtemplates (nested/embded templates)
 
-If you have modularize your template you can do this like int this example:
+If you want modularize your template you can do this like int this example:
 
     type Ctx struct {
         a int
