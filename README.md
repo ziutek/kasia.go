@@ -149,8 +149,7 @@ strings are subtemplates with the same context as main template:
 
 In previous example you can also see how pass arguments to a function (also
 where the function returning other function). In the same way you can call
-methods. Note: if the method or function has no arguments you must call it like
-filed:
+methods:
 
     $:M1       // M1 has no arguments
     $:M1()     // M1 has no arguments, force function/method
