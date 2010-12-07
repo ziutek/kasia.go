@@ -329,4 +329,43 @@ the output.
     This code are ignored
 
     $a $b
-    #$
+#$
+
+## Subtemplates (nested/embded templates)
+
+If you have modularize your template you can do this like int this example:
+
+    type Ctx struct {
+        a int
+        b string
+        c *SubCtx
+        tpl1 *Template
+        tpl2 *Template
+    }
+
+    type SubCtx struct {
+        s int
+        t float
+    } 
+
+Main template:
+
+    Variables from main context: $a, $b
+
+    First subtemplate: $tpl1
+
+    Second subtemplate: $tpl2.Nested(c)
+
+Subtemplate tpl1:
+
+    This template uses main context: $a, $b
+
+    You can lead to a loop if uncoment this: $# $tpl1 #$
+
+Subtemplate tpl2:
+
+    This template operates on context passed to it via Nested method: $s, $t
+
+How you can see in the example above, you can use subtemplates in two ways:
+1. Render subtemplate on main context by typing `$tpl1`.
+2. Render subtemplate with custom context: `$tpl2.Nested(custom_context)`.
