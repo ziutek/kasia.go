@@ -1,4 +1,4 @@
-Sorry for my poor english :(
+Sorry for my poor English :(
 
 # FAQ
 
@@ -12,9 +12,9 @@ much simpler.
 
 ## What means "Kasia"?
 
-Kasia is my daughter's name (polish equivalent of Katie or Kathy).
+Kasia is my daughter's name (Polish equivalent of Katie or Kathy).
 
-## How use it?
+## How to use it?
 
 Kasia's native interface contains one function and three methods:
 
