@@ -84,7 +84,7 @@ Example:
     err = tpl.Execute(data, os.Stdout)
 
     // One more time to stdout - mustache.go way
-    err = fmt.Println(Render(context_data))
+    err = fmt.Println(tpl.Render(context_data))
 
 # Kasia's syntax in examples
 
