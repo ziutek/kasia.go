@@ -21,7 +21,7 @@ Kasia is my daughter's name (Polish equivalent of Katie or Kathy).
 
 ## How to use "Kasia.go"?
 
-Kasia's native interface contains one function and three methods:
+Kasia native interface contains one function and three methods:
 
     func New() *Template
     func (*Template) Parse(str string) os.Error
