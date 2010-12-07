@@ -329,7 +329,7 @@ the output.
     This code are ignored
 
     $a $b
-#$
+    #$
 
 ## Subtemplates (nested/embded templates)
 
