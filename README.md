@@ -23,7 +23,7 @@ Kasia's native interface contains one function and three methods:
     func (*Template) Run(wr io.Writer, ctx ...interface{}) os.Error
     func (*Template) Nested(ctx interface{}) *NestedTemplate 
 
-The simplest usage is:
+The simplest example is:
 
     package main
 
