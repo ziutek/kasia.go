@@ -368,5 +368,5 @@ Subtemplate tpl2:
 
 How you can see in the example above, you can use subtemplates in two ways:
 
-1. Render subtemplate on main context by typing `$tpl1`.
+1. Render subtemplate with main context by typing `$tpl1`.
 2. Render subtemplate with custom context: `$tpl2.Nested(custom_context)`.
