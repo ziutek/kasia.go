@@ -21,8 +21,8 @@ type NestedTemplate struct {
 }
 
 // Okresla wartosc parametru.
-func execParam(wr io.Writer, par interface{}, ctx []interface{}, ln int) (
-        ret reflect.Value, err os.Error) {
+func execParam(wr io.Writer, par interface{}, ctx []interface{}, ln int,
+        strict bool) (ret reflect.Value, err os.Error) {
     switch pv := par.(type) {
     case *reflect.IntValue:
         // Argumentem jest liczba staloprzecinowa
@@ -44,7 +44,7 @@ func execParam(wr io.Writer, par interface{}, ctx []interface{}, ln int) (
 
     case *VarFunElem:
         // Argumentem jest zmienna
-        ret, err = execVarFun(wr, pv, ctx, true)
+        ret, err = execVarFun(wr, pv, ctx, strict)
         if err != nil {
             return
         }
@@ -62,7 +62,7 @@ func execArgs(wr io.Writer, vf *VarFunElem, ctx []interface{}) (
 
     var arg reflect.Value
     for ii := range vf.args {
-        arg, err = execParam(wr, vf.args[ii], ctx, vf.ln)
+        arg, err = execParam(wr, vf.args[ii], ctx, vf.ln, true)
         if err != nil {
             return
         }
@@ -213,7 +213,8 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
 
         case *IfElem:
             var v1, v2 reflect.Value
-            v1, err = execParam(wr, el.arg1, ctx, el.ln)
+            // Parametry musza istniec jesli porownujemy je ze soba.
+            v1, err = execParam(wr, el.arg1, ctx, el.ln, el.cmp != if_nocmp)
             if err != nil {
                 return
             }
@@ -221,7 +222,7 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
             if el.cmp == if_nocmp {
                 tf = getBool(v1)
             } else {
-                v2, err = execParam(wr, el.arg2, ctx, el.ln)
+                v2, err = execParam(wr, el.arg2, ctx, el.ln, true)
                 if err != nil {
                     return
                 }
