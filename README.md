@@ -91,7 +91,7 @@ Example:
     // One more time, mustache.go way
     err = fmt.Println(tpl.Render(data))
 
-# Kasia's syntax in examples
+# Introduction to Kasia templates syntax
 
 ## Getting data from a array/slice
 
