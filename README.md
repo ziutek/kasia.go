@@ -226,8 +226,8 @@ If map is int indexed
 
 you can use only index notation:
 
-    $$[-1]
-    $$[101]
+    $[-1]
+    $[101]
 
 ## Escaping
 
