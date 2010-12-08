@@ -124,26 +124,28 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
 
     // Poszukujemy poczatku sciezki do zmiennej przechodzac poszczegolne
     // warstwy kontekstu, rozpoczynajac od warstwy najbardziej lokalnej.
-    name_id = path[0]
-    stat := RUN_OK
     var args []reflect.Value
     args, err = execArgs(wr, vf, ctx)
     if err != nil {
         return
     }
+    name_id = path[0]
+    stat := RUN_OK
+    var run_error bool
     for ii := len(ctx); ii > 0; {
         ii--
         val, stat = getVarFun(reflect.NewValue(ctx[ii]), name_id, args, vf.fun)
-        if stat == RUN_OK || stat != RUN_NOT_FOUND {
+        run_error = (stat != RUN_NOT_FOUND && stat != RUN_NIL_CTX)
+        if stat == RUN_OK || run_error {
             // Znalezlismy zmienna lub wystapil blad
             break
         }
     }
     if stat != RUN_OK {
-            if stat == RUN_NOT_FOUND && !strict {
-                return nil, nil
+            if strict || run_error {
+                return nil, RunErr{vf.ln, stat, nil}
             }
-            return nil, RunErr{vf.ln, stat, nil}
+            return nil, nil
     }
     // Poczatek sciezki do zmiennej znaleziony - przechodzimy reszte.
     for _, name_id = range path[1:] {
@@ -154,10 +156,10 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         }
         val, stat = getVarFun(val, name_id, args, vf.fun)
         if stat != RUN_OK {
-            if stat == RUN_NOT_FOUND && !strict {
-                return nil, nil
+            if strict || (stat != RUN_NOT_FOUND && stat != RUN_NIL_CTX) {
+                return nil, RunErr{vf.ln, stat, nil}
             }
-            return nil, RunErr{vf.ln, stat, nil}
+            return nil, nil
         }
     }
     return

@@ -235,6 +235,9 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
                 return nil, RUN_NOT_FOUND
             }
 
+        case nil:
+            return nil, RUN_NIL_CTX
+
         default:
             return nil, RUN_UNK_TYPE
         }
