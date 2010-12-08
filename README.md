@@ -60,7 +60,7 @@ The simplest example is:
 
 More examples are in *examples* directory
 
-There are next few methods/functions for Go's template compatibility:
+There are next few methods/functions for Go template compatibility:
 
     func (*Template) Execute(data interface{}, wr io.Writer) os.Error
     func (*Template) ParseFile(filename string) os.Error
@@ -130,7 +130,7 @@ If the context is a struct like this:
         return cd.B == s
     }
 
-you can get values from it using field's name or field's index:
+you can get values from it using name or index of field:
 
     $A    ==  $[0]
     $B    ==  $[1]
@@ -188,7 +188,7 @@ You can explicitly specify variable or function boundaries using braces:
 
 By default, if variable doesn't exist you get empty string. You can change this
 behavior by setting `Template.Strict` to true and now get error code if variable
-doesn't exist. If variable is used as function's argument or index it is always
+doesn't exist. If variable is used as argument of function or index it is always
 executed in strict mode.
 
 `fmt.Fprint()` and `fmt.Sprint()` functions are used to render variables values.
@@ -265,9 +265,10 @@ Value is false when:
 1. Is bool and false.
 2. Is int and eqal 0.
 3. Is float and eqal 0.0.
-4. Is complex and eqal cplx(0, 0)
+4. Is complex and eqal cplx(0, 0).
 5. Is zero length string, slice, array or map.
 6. Is nil interface or pointer.
+7. Doesn't exists (even in strict mode)>
 
 This form of *if* doesn't dereference interfaces nor pointers before evaluate.
 
@@ -284,7 +285,7 @@ You can use simple comparasion in if/elif statement:
     $end
 
 If compared values have diferent types you should use only '!=' and '=='
-operators. If the types match, Go's comparasion rules are applied. This form of
+operators. If the types match, Go comparasion rules are applied. This form of
 *if* dereference interfaces and pointers before comparasion.
 
 You can use braces for all statements (useful for `$end` statement):
@@ -375,3 +376,45 @@ How you can see in the example above, you can use subtemplates in two ways:
 
 1. Render subtemplate with main context by typing `$tpl1`.
 2. Render subtemplate with custom context: `$tpl2.Nested(custom_context)`.
+
+## Context stack
+
+You can divide the data context into two (or more) parts. For example, the first
+part of the context may be a global data:
+
+    type Ctx struct {
+        a, b  string
+    }
+
+the second part may be e local data:
+
+    type LocalCtx struct {
+        b string
+        c int
+    }
+
+You can pass they together to *Run* method:
+
+    func hello(web_ctx *web.Context, val string) {
+        // Local data
+        var ld *LocalCtx
+
+        if len(val) > 0 {
+            ld = &LocalCtx{val, len(val)}
+        }
+
+        // Rendering data
+        err := tpl.Run(web_ctx, data, ld)
+        if err != nil {
+            fmt.Fprint(web_ctx, "%", err, "%")
+        }
+    }
+
+When `$b` occurs in template, *Run* first looks for it the *ld*, and only if it
+didn't found it, looks for it in *data*.
+
+Now you can set global context data once, and set local context data in each
+call of *hello()* function. What's more, if *ld* isn't nil, 'b' field in *ld*
+will be rendered, not 'b field in *data*.
+
+
