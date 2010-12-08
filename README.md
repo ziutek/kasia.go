@@ -414,7 +414,7 @@ When `$b` occurs in template, *Run* first looks for it the *ld*, and only if it
 didn't found it, looks for it in *data*.
 
 Now you can set global context data once, and set local context data in each
-call of *hello()* function. What's more, if *ld* isn't nil, 'b' field in *ld*
-will be rendered, not 'b field in *data*.
+call of *hello()* function. What's more, if *ld* isn't nil, *b* field in *ld*
+will be rendered, not *b* field in *data*.
 
 
