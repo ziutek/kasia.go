@@ -100,7 +100,7 @@ from it like this:
 
     $[0] $[2]
 
-You can use negative indexes in Python way: `a[-n] = a[len(a)-n]`.
+You can use negative indexes in Python way: `a[-n] == a[len(a)-n]`.
 
 If `$[0]` is int variable, you can use it as an index:
 
@@ -153,7 +153,7 @@ strings are subtemplates with the same context as main template:
     $F(0)("$$$A $"and$" $$$["A"]", 1) == $['F'](0)('$$$A "and" $$$['A']', 1)
 
 In previous example you can also see how pass arguments to a function (also
-where the function returning other function). In the same way you can call
+when the function returning other function). In the same way you can call
 methods:
 
     $:M1       // M1 has no arguments
@@ -180,7 +180,7 @@ function with a, b parameters and returns its first return value.
 
 If data context is a function, you can call it like this:
 
-    $(8)
+    $(8) 
 
 You can explicitly specify variable or function boundaries using braces:
 
@@ -328,10 +328,10 @@ the output.
 
     $# This is my comment #$
 
-    This is interpreted code $a, $b.
+    This is interpreted text/code: $a, $b.
 
     $#
-    This code are ignored
+    This is ignored  text/code
 
     $a $b
     #$
