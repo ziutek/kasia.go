@@ -7,7 +7,7 @@ import (
     "bytes"
 )
 
-// Renderowanie do tekstu - metoda przydatna przy testowaniu
+// Renderowanie do tekstu - metoda i funkcja przydatne przy testowaniu
 
 func (tpl *Template) RenderTxt(ctx ...interface{}) (string, os.Error) {
     var buf bytes.Buffer
@@ -16,6 +16,16 @@ func (tpl *Template) RenderTxt(ctx ...interface{}) (string, os.Error) {
         return "", err
     }
     return buf.String(), nil
+}
+
+func RenderTxt(txt string, strict bool, ctx ...interface{}) (string, os.Error) {
+    tpl := New()
+    tpl. Strict = strict
+    err := tpl.Parse(txt)
+    if err != nil {
+        return "", err
+    }
+    return tpl.RenderTxt(ctx...)
 }
 
 // Funkcje i metody kompatybilne z Go template
@@ -29,9 +39,9 @@ func (tpl *Template) ParseFile(filename string) (err os.Error) {
     return tpl.Parse(string(data))
 }
 
-func Parse(str string) (tpl *Template, err os.Error) {
+func Parse(txt string) (tpl *Template, err os.Error) {
     tpl = New()
-    err = tpl.Parse(str)
+    err = tpl.Parse(txt)
     if err != nil {
         tpl = nil
     }
@@ -58,3 +68,12 @@ func (tpl *Template) Render(ctx ...interface{}) (out string) {
     return
 }
 
+
+func Render(txt string, ctx ...interface{}) (out string) {
+    var err os.Error
+    out, err = RenderTxt(txt, false, ctx...)
+    if err != nil {
+        panic(err)
+    }
+    return
+}
