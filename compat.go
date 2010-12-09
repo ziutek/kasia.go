@@ -7,7 +7,18 @@ import (
     "bytes"
 )
 
-// Funkcje i metody kompatybilne z Go template.
+// Renderowanie do tekstu - metoda przydatna przy testowaniu
+
+func (tpl *Template) RenderTxt(ctx ...interface{}) (string, os.Error) {
+    var buf bytes.Buffer
+    err := tpl.Run(&buf, ctx...)
+    if err != nil {
+        return "", err
+    }
+    return buf.String(), nil
+}
+
+// Funkcje i metody kompatybilne z Go template
 
 func (tpl *Template) Execute(data interface{}, wr io.Writer) os.Error {
     return tpl.Run(wr, data)
@@ -38,11 +49,12 @@ func ParseFile(filename string) (tpl *Template, err os.Error) {
 
 // Funkcje i metody kompatybilne z mustache.go
 
-func (tpl *Template) Render(ctx ...interface{}) string {
-    var buf bytes.Buffer
-    err := tpl.Run(&buf, ctx...)
+func (tpl *Template) Render(ctx ...interface{}) (out string) {
+    var err os.Error
+    out, err = tpl.RenderTxt(ctx...)
     if err != nil {
         panic(err)
     }
-    return buf.String()
+    return
 }
+
