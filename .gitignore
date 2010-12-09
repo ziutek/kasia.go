@@ -6,3 +6,4 @@
 *.out
 *.go~
 _obj
+_testmain.go
