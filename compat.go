@@ -7,25 +7,41 @@ import (
     "bytes"
 )
 
-// Renderowanie do tekstu - metoda i funkcja przydatne przy testowaniu
+// Renderowanie do tekstu lub tablicy bajtow
 
-func (tpl *Template) RenderTxt(ctx ...interface{}) (string, os.Error) {
+func (tpl *Template) RenderBytes(ctx ...interface{}) ([]byte, os.Error) {
     var buf bytes.Buffer
     err := tpl.Run(&buf, ctx...)
     if err != nil {
-        return "", err
+        return nil, err
     }
-    return buf.String(), nil
+    return buf.Bytes(), nil
 }
 
-func RenderTxt(txt string, strict bool, ctx ...interface{}) (string, os.Error) {
+func (tpl *Template) RenderString(ctx ...interface{}) (string, os.Error) {
+    bytes, err := tpl.RenderBytes(ctx...)
+    return string(bytes), err
+}
+
+func RenderBytes(txt string, strict bool, ctx ...interface{}) (
+        []byte, os.Error) {
+
     tpl := New()
     tpl. Strict = strict
+
     err := tpl.Parse(txt)
     if err != nil {
-        return "", err
+        return nil, err
     }
-    return tpl.RenderTxt(ctx...)
+
+    return tpl.RenderBytes(ctx...)
+}
+
+func RenderString(txt string, strict bool, ctx ...interface{}) (
+        string, os.Error) {
+
+    bytes, err := RenderBytes(txt, strict, ctx...)
+    return string(bytes), err
 }
 
 // Funkcje i metody kompatybilne z Go template
@@ -61,7 +77,7 @@ func ParseFile(filename string) (tpl *Template, err os.Error) {
 
 func (tpl *Template) Render(ctx ...interface{}) (out string) {
     var err os.Error
-    out, err = tpl.RenderTxt(ctx...)
+    out, err = tpl.RenderString(ctx...)
     if err != nil {
         panic(err)
     }
@@ -71,7 +87,7 @@ func (tpl *Template) Render(ctx ...interface{}) (out string) {
 
 func Render(txt string, ctx ...interface{}) (out string) {
     var err os.Error
-    out, err = RenderTxt(txt, false, ctx...)
+    out, err = RenderString(txt, false, ctx...)
     if err != nil {
         panic(err)
     }

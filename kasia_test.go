@@ -27,7 +27,7 @@ var tests = []Test{
 
 func TestAll(t *testing.T) {
     for _, te := range tests {
-        out, err := RenderTxt(te.txt, te.strict, te.ctx)
+        out, err := RenderString(te.txt, te.strict, te.ctx)
         strict := ""
         if te.strict {
             strict = "/strict"

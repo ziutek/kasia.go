@@ -65,16 +65,18 @@ There are a few methods/functions for Go template compatibility:
     func Parse(txt string) (*Template, os.Error)
     func ParseFile(filename string) (*Template, os.Error)
 
-one method and one function for mustache.go compatibility (they panic when error
-occurs):
+one method and one function for mustache.go compatibility (they panics when
+error occurs):
 
     func (*Template) Render(ctx ...interface{}) string
     func Render(txt string, ctx ...interface{}) string
 
 and their counterparts with error reporting (without panic):
 
-    func (*Template) RenderTxt(ctx ...interface{}) (string, os.Error)
-    func RenderTxt(txt string, strict bool, ctx ...interface{}) (string, os.Error)
+    func (*Template) RenderString(ctx ...interface{}) (string, os.Error)
+    func RenderString(txt string, strict bool, ctx ...interface{}) (string, os.Error)
+    func (*Template) RenderBytes(ctx ...interface{}) ([]byte, os.Error)
+    func RenderBytes(txt string, strict bool, ctx ...interface{}) ([]byte, os.Error)
 
 Example:
 
@@ -164,7 +166,7 @@ methods:
     $:M1       // M1 has no arguments
     $:M1()     // M1 has no arguments, force function/method
     $M2("A")   // Doesn't work (potiner method - see note)
-    $G.M2("A") // Works, becouse $$G is pointer (see note)
+    $G.M2("A") // Works, becouse $G is pointer (see note)
 
 [Note about pointer methods](http://groups.google.com/group/golang-nuts/browse_thread/thread/ec6b27e332ed7f77).
 
