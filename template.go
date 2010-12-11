@@ -248,7 +248,7 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
 
         case *ForElem:
             var val reflect.Value
-            val, err = execVarFun(wr, el.arg, ctx, true)
+            val, err = execVarFun(wr, el.arg, ctx, false)
             if err != nil {
                 return
             }
