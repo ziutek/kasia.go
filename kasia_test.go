@@ -1,6 +1,9 @@
 package kasia
 
-import "testing"
+import (
+    "testing"
+    "bytes"
+)
 
 type Test struct {
     txt    string
@@ -9,6 +12,10 @@ type Test struct {
     ctx    interface{}
 }
 
+type S1 struct {
+    a int
+    b float
+}
 
 var (
 
@@ -66,6 +73,11 @@ tests = []Test{
     `$[0], $[1], $[2], $[-1], $[-2], $[-3]`,
     `A, B, C, C, B, A`, true,
     []string {"A", "B", "C"},
+},{
+    // struct: 'for'
+    "$for i+, v in arr:$i: $v.a, $v.b\n$end\n$for i,v in x:A$else:B$end\n\n",
+    "1: 0, 0.5\n2: 1, 0.25\n3: 2, 0.125\nB\n", true,
+    struct{arr []S1}{[]S1{S1{0, 1/2.0}, S1{1, 1/4.0}, S1{2, 1/8.0}}},
 },
 }
 
@@ -83,6 +95,41 @@ func TestAll(t *testing.T) {
         } else if out != te.expect {
             t.Fatalf("`%s`%s out `%s` expect `%s`",
                 te.txt, strict, out, te.expect)
+        }
+    }
+}
+
+
+const bench_kt = `
+$for i, v in arr:
+    $i: $v.a, $v.b
+$end
+`
+
+var bctx = struct {
+    arr [1000]S1
+}{}
+
+
+func BenchmarkFor(b *testing.B) {
+    b.StopTimer()
+    // Szykujemy dane
+    for ii := 0; ii < len(bctx.arr); ii++ {
+        bctx.arr[ii].a = ii*ii
+        bctx.arr[ii].b = 1.0 / (1.0 + float(ii))
+    }
+    // Tworzymy szablon
+    tpl := New()
+    tpl.Parse(bench_kt)
+    tpl.Strict = true
+    var buf bytes.Buffer
+    // Startujemy test
+    b.StartTimer()
+    for ii := 0; ii < b.N; ii++ {
+        buf.Reset()
+        err := tpl.Run(&buf, bctx)
+        if err != nil {
+            panic(err)
         }
     }
 }
