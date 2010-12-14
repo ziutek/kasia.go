@@ -167,7 +167,7 @@ methods:
     $:M1       // M1 has no arguments
     $:M1()     // M1 has no arguments, force function/method
     $M2("A")   // Doesn't work (potiner method - see note)
-    $G.M2("A") // Works, becouse $G is pointer (see note)
+    $G.M2("A") // Works, becouse $G is a pointer (see note)
 
 [Note about pointer methods](http://groups.google.com/group/golang-nuts/browse_thread/thread/ec6b27e332ed7f77).
 

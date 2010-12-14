@@ -21,6 +21,7 @@ type S1 struct {
 var (
 
 f1 = func() int { return 0 }
+tpl1, _ = Parse("$a $b")
 
 tests = []Test{
 {
@@ -98,6 +99,17 @@ tests = []Test{
     "$for i+, v in arr:$i: $v.a, $v.b\n$end\n$for i,v in x:A$else:B$end\n\n",
     "1: 0, 0.5\n2: 1, 0.25\n3: 2, 0.125\nB\n", true,
     struct{arr []S1}{[]S1{S1{0, 1/2.0}, S1{1, 1/4.0}, S1{2, 1/8.0}}},
+},{
+    //map: Nested templates
+    "$tpl\n $tpl.Nested(ctx1)\n $tpl.Nested(ctx1, ctx2)\n",
+    "1 1.1\n 2 2.2\n 2 3.3\n", true,
+    map[string]interface{} {
+        "tpl": tpl1,
+        "a":   1,
+        "b":   1.1,
+        "ctx1": S1{2, 2.2},
+        "ctx2": map[string]float{"b": 3.3},
+    },
 },
 }
 
