@@ -52,6 +52,9 @@ func (tpl *Template) Execute(data interface{}, wr io.Writer) os.Error {
 
 func (tpl *Template) ParseFile(filename string) (err os.Error) {
     data, err := ioutil.ReadFile(filename)
+    if err != nil {
+        return
+    }
     return tpl.Parse(string(data))
 }
 
