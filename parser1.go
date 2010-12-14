@@ -176,16 +176,20 @@ func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
             if err != nil {
                 return
             }
-            // parse1Param() usunela biale znaki wiec musi teraz wystapic ']'.
+            // parse1Param() usunela biale znaki, wiec musi teraz wystapic ']'.
             if frag[0] != ']' {
                 err = ParseErr{*lnum, PARSE_BAD_NAME}
                 return
             }
             frag = frag[1:]
-         } else if frag[0] == '(' {
-            // Bezposrednie wywolanie funkcji na samym kontekscie.
+        } else if frag[0] == '@' {
+            // Bezposrednie odwolanie do samego kontekstu
             el.name = nil
-         } else if str.IndexRune(not_letters, int(frag[0])) == -1 {
+            frag = frag[1:]
+        } else if frag[0] == '(' {
+            // Bezposrednie wywolanie funkcji na samym kontekscie
+            el.name = nil
+        } else if str.IndexRune(not_letters, int(frag[0])) == -1 {
             // Nazwa statyczna
             ii := findChar(frag, seps, lnum)
             if ii == -1 {
@@ -506,8 +510,9 @@ func parse1(txt *string, lnum *int, txt_sep string) (
                 return
             }
             switch frag[0] {
-            case '[', '(':
-                // Zmienna o dynamicznej lub liczbowej nazwie lub samowywolanie.
+            case '@', '[', '(':
+                // Bezposrednie odwolanie do samego kontekstu, zmienna
+                // o dynamicznej lub liczbowej nazwie lub samowywolanie.
                 var vf *VarFunElem
                 vf, err = parse1VarFun("", &frag, lnum, filtered)
                 if err != nil {

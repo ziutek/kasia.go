@@ -186,7 +186,7 @@ return value.
 If variable F is a function or a reference to a function, `$F(a, b)` calls the
 function with arguments a, b and returns its first return value.
 
-If the data context is a function, for example:
+If the context is a function, for example:
 
     func ctx(i int) int {
         i++
@@ -211,7 +211,7 @@ executed in strict mode.
 
 ## Getting data from a map
 
-If the data context is a map you can use it in a way similar to a struct context.
+If the context is a map you can use it in a way similar to a struct context.
 If the map is has string key like this:
 
     map[string]interface{} {
@@ -245,6 +245,21 @@ you can only use index notation:
     $[101]
 
 Map may have a key of any type but, you can use directly (without using a variable) only string, int or float key.
+
+## Render the context itself
+
+If the context is a single value, without internal structure, you can use it
+like this:
+
+    $@
+
+*@* means context itself, and thus may occur at the begining of any path:
+
+    $@.a    == $a
+    $@.a.b  == $a.b
+    $@(2)   == $(2)
+    $@[1]   == $[1]
+    $@["b"] == $["b"] -= $b
 
 ## Escaping
 

@@ -36,13 +36,13 @@ tests = []Test{
     nil,
 },{
     // map: Variable and function
-    `$aa, $bc(1)`,
-    `Ala, 2`, true,
+    `$aa, $bc(1), $@.aa, $@.bc(1)`,
+    `Ala, 2, Ala, 2`, true,
     map[string]interface{}{"aa": "Ala", "bc": func(i int)int{return 2*i}},
 },{
     // map: Variable and function, string key
-    `$["aa"], $['bc'](1)`,
-    `Ala, 2`, true,
+    `$["aa"], $['bc'](1), $@["aa"]`,
+    `Ala, 2, Ala`, true,
     map[string]interface{}{"aa": "Ala", "bc": func(i int)int{return 2*i}},
 },{
     // map: Integer key, not strict mode
@@ -94,8 +94,8 @@ tests = []Test{
     struct {f *func()int}{&f1},
 },{
     // func:
-    `$((((((((1)))))))) $(0)`,
-    `9 1`, true,
+    `$((((((((1)))))))) $(0) $@(1) $@((-2))`,
+    `9 1 2 0`, true,
     func (i int) int {i++; return i},
 },{
     // map: DotDotDot function, int args
@@ -137,6 +137,12 @@ tests = []Test{
         "ctx1": S1{2, 2.2},
         "ctx2": map[string]float{"b": 3.3},
     },
+},{
+    //int
+    `$@ $@.`, `7 7.`, true, 7,
+},{
+    //string: HTML escaping
+    `$@ $:@`, `&amp;&apos;&lt;&gt;&quot; &'<>"`, true, `&'<>"`,
 },
 }
 
