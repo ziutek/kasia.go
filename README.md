@@ -24,7 +24,7 @@ Kasia's native interface contains one function and three methods:
     func New() *Template
     func (*Template) Parse(str string) os.Error
     func (*Template) Run(wr io.Writer, ctx ...interface{}) os.Error
-    func (*Template) Nested(ctx interface{}) *NestedTemplate 
+    func (*Template) Nested(ctx ...interface{}) *NestedTemplate 
 
 The simplest example is:
 
@@ -75,6 +75,7 @@ and their counterparts with error reporting (without panic):
 
     func (*Template) RenderString(ctx ...interface{}) (string, os.Error)
     func RenderString(txt string, strict bool, ctx ...interface{}) (string, os.Error)
+
     func (*Template) RenderBytes(ctx ...interface{}) ([]byte, os.Error)
     func RenderBytes(txt string, strict bool, ctx ...interface{}) ([]byte, os.Error)
 
@@ -185,9 +186,17 @@ return value.
 If variable F is a function or a reference to a function, `$F(a, b)` calls the
 function with arguments a, b and returns its first return value.
 
-If the data context is a function, you can call it like this:
+If the data context is a function, for example:
 
-    $(8) 
+    func ctx(i int) int {
+        i++
+        return i
+    }
+
+you can call it like this:
+
+    $(8) == 9
+    $((((8)))) == 12
 
 You can explicitly specify variables or function boundaries using braces:
 

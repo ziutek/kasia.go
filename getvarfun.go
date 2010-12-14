@@ -106,8 +106,8 @@ loop:
 
 // Funkcja sprawdza zgodnosc typow argumentow. Jesli to konieczne konwertuje
 // argumenty do typu interface{}. Uwaga! Funkcja moze modyfikowac wartosci args.
-func argsMatch(ft *reflect.FuncType, args []reflect.Value, method int) int {
-    // Sprawdzamy zgodnosc typow argumentow
+/*func argsMatch(ft *reflect.FuncType, args []reflect.Value, method int) int {
+    // Sprawdzamy zgodnosc ilosci argumentow
     if ft.NumIn() - method != len(args) {
         return RUN_WRONG_ARG_NUM
     }
@@ -127,7 +127,78 @@ func argsMatch(ft *reflect.FuncType, args []reflect.Value, method int) int {
         }
     }
     return RUN_OK
+}*/
+// Funkcja sprawdza zgodnosc typow argumentow. Jesli to konieczne konwertuje
+// argumenty do typu interface{}. Jesli to potrzebna, funkcja odpowiednio
+// dostosowuje args dla funkcji.
+func argsMatch(ft *reflect.FuncType, args *[]reflect.Value, method int) int {
+    // Liczba arguemntow akceptowanych przez funkcje/metode
+    num_in := ft.NumIn() - method
+
+    // Sprawdzamy zgodnosc liczby argumentow i obecnosc funkcji dotdotdot
+    var head_args, tail_args []reflect.Value
+    if ft.DotDotDot() {
+        num_in--
+        if len(*args) < num_in {
+            return RUN_WRONG_ARG_NUM
+        }
+        head_args = (*args)[0:num_in]
+        tail_args = (*args)[num_in:]
+    } else {
+        if num_in != len(*args) {
+            return RUN_WRONG_ARG_NUM
+        }
+        head_args = *args
+    }
+
+    // Sprawdzamy zgodnosc typow poczatkowych argumentow funkcji
+    for kk, av := range head_args {
+        at := ft.In(kk + method)
+        //fmt.Printf("DEB: ctx: %s, fun: %s\n", av.Type(), at)
+        if at != av.Type() {
+            // Sprawdzamy czy arguentem funkcji jest typ interface{}
+            if it, ok := at.(*reflect.InterfaceType); ok && it.NumMethod()==0 {
+                // Zmieniamy typ argumentu przekazywanego do funkcji
+                vi := av.Interface()
+                head_args[kk] = reflect.NewValue(&vi).(*reflect.PtrValue).Elem()
+            } else {
+                return RUN_WRONG_ARG_TYP
+            }
+        }
+    }
+
+    if !ft.DotDotDot() {
+        return RUN_OK
+    }
+
+    // Okreslamy typ argumentów zawartych w dotdotdot
+    st := ft.In(ft.NumIn() - 1).(*reflect.SliceType)
+    at := st.Elem()
+    it, ok := at.(*reflect.InterfaceType)
+    at_is_interface := (ok && it.NumMethod() == 0)
+    // Przygotowujemy miejsce na argumenty
+    ddd := reflect.MakeSlice(st, len(tail_args), cap(tail_args))
+    for kk, av := range tail_args {
+        if at != av.Type() {
+            // Sprawdzamy czy arguentem funkcji jest typ interface{}
+            if at_is_interface {
+                // Zmieniamy typ argumentu przekazywanego do funkcji
+                vi := av.Interface()
+                tail_args[kk] = reflect.NewValue(&vi).(*reflect.PtrValue).Elem()
+            } else {
+                return RUN_WRONG_ARG_TYP
+            }
+        }
+        // Umieszczamy argument w ddd
+        ddd.Elem(kk).SetValue(av)
+    }
+
+    // Zwracamy zmodyfikowana tablice argumentow
+    *args = append(head_args, ddd)
+
+    return RUN_OK
 }
+
 
 // Funkcja zwraca wartosc zmiennej o podanej nazwie lub indeksie. Jesli zmienna
 // jest funkcja, wczesniej wywoluje ja z podanymi argumentami. Funkcja
@@ -156,7 +227,7 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
             method := tt.Method(ii)
             // Sprawdzamy zgodnosc nazwy metody i typu receiver'a
             if method.Name == id.Get() && tt == method.Type.In(0) {
-                stat := argsMatch(method.Type, args, 1)
+                stat := argsMatch(method.Type, &args, 1)
                 if stat != RUN_OK {
                     return nil, stat
                 }
@@ -252,7 +323,7 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
     if vt, ok := ctx.(*reflect.FuncValue); ok {
         ft := vt.Type().(*reflect.FuncType)
         // Sprawdzamy zgodnosc liczby argumentow
-        stat := argsMatch(ft, args, 0)
+        stat := argsMatch(ft, &args, 0)
         if stat != RUN_OK {
             return nil, stat
         }

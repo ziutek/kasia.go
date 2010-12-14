@@ -3,6 +3,7 @@ package kasia
 import (
     "testing"
     "bytes"
+    "fmt"
 )
 
 type Test struct {
@@ -68,6 +69,25 @@ tests = []Test{
     `$((((((((1)))))))) $(0)`,
     `9 1`, true,
     func (i int) int {i++; return i},
+},{
+    // map: DotDotDot function, int args
+    `$fun(1), $fun(1, 2), $fun(1, 2, 3)`,
+    `[1], [1 2], [1 2 3]`, true,
+    map[string]func(...int)string {
+        "fun": func(n ...int) string {
+            return fmt.Sprint([]int(n))
+        },
+    },
+},{
+    // map: DotDotDot function, interface args
+    `$fun(1) $fun(1, 2.2) $fun(1, 2.2, "text") $fun(1, 2.2, "text", val)`,
+    "1\n 1 2.2\n 1 2.2 text\n 1 2.2 text true\n", true,
+    map[string]interface{} {
+        "fun": func(n ...interface{}) string {
+            return fmt.Sprintln(n...)
+        },
+        "val": true,
+    },
 },{
     // slice:
     `$[0], $[1], $[2], $[-1], $[-2], $[-3]`,

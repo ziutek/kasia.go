@@ -17,7 +17,7 @@ type Template struct {
 
 type NestedTemplate struct {
     tpl *Template
-    ctx interface{}
+    ctx []interface{}
 }
 
 // Okresla wartosc parametru.
@@ -196,7 +196,7 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                 }
             case NestedTemplate:
                 // Zagniezdzony szablon z wlasnym kontekstem
-                err = vtn.tpl.Run(wr, vtn.ctx)
+                err = vtn.tpl.Run(wr, vtn.ctx...)
                 if err != nil {
                     return RunErr{el.ln, RUN_NESTED, err}
                 }
@@ -335,7 +335,7 @@ func (tpl *Template) Parse(str string) (err os.Error) {
     return
 }
 
-func (tpl *Template) Nested(ctx interface{}) *NestedTemplate {
+func (tpl *Template) Nested(ctx ...interface{}) *NestedTemplate {
     return &NestedTemplate{tpl, ctx}
 }
 
