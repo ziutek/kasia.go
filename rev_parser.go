@@ -45,8 +45,8 @@ func revParse1VarFun(vf *VarFunElem) (ret string) {
             }
             ret += pe.Get()
 
-        case *reflect.IntValue:
-            ret += fmt.Sprintf("[%d]", pe.Get())
+        case reflect.Value:
+            ret += fmt.Sprintf("[%v]", pe.Interface())
 
         case nil:
             // Samowywolanie
@@ -168,8 +168,8 @@ func revParse2VarFun(vf *VarFunElem) (ret string) {
             }
             ret += pe.Get()
 
-        case *reflect.IntValue:
-            ret += fmt.Sprintf("[%d]", pe.Get())
+        case reflect.Value:
+            ret += fmt.Sprintf("[%v]", pe.Interface())
 
         case nil:
             // Samowywolanie
