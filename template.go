@@ -86,16 +86,15 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         // uzywamy trybu strict.
         switch pe := pv.name.(type) {
         case nil:
-            // Kontekst jest funkcja
+            // Brak nazwy wiec elementem sciezki jest czyste wywolanie funkcji
             name_id = nil
 
-        case *reflect.StringValue:
-            // Elementem sciezki jest nazwa tekstowa lub indeks tekstowy.
-            name_id = pe
-
-        case  *reflect.IntValue:
-            // Elementem sciezki jest indeks liczbowy.
-            name_id = pe
+        case *reflect.StringValue, *reflect.IntValue, *reflect.FloatValue:
+            // Elementem sciezki jest:
+            //   *reflect.StringValue: nazwa tekstowa lub indeks tekstowy,
+            //   *reflect.IntValue:    indeks calkowity,
+            //   *reflect.FloatValue:  indeks zmiennorzecinkowy.
+            name_id = pe.(reflect.Value)
 
         case []Element:
             // Elementem sciezki jest indeks tekstowy.

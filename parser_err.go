@@ -15,7 +15,6 @@ const (
     PARSE_UNEXP_ELIF
     PARSE_UNEXP_ELSE
     PARSE_UNEXP_END
-    PARSE_BAD_INT
     PARSE_BAD_FLOINT
     PARSE_IF_NEND
     PARSE_FOR_NEND
@@ -39,7 +38,6 @@ func (pe ParseErr) String() string {
         "unexpected 'elif' statement",
         "unexpected 'else' statement",
         "unexpected 'end' statement",
-        "bad int constant",
         "bad float/int constant",
         "not closed if/elif",
         "not closed for",

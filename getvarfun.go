@@ -76,58 +76,6 @@ loop:
     }
 }
 
-// Dereferncja ktora pozostawia ostatni wskaznik, jesli nie wskazuje na
-// interfejs lub nastepny wskaznik.
-/*func derefNoPtr(val *reflect.Value) {
-loop:
-    for {
-        switch vt := (*val).(type) {
-        case *reflect.PtrValue:
-            new_val := vt.Elem()
-            switch new_val.Type().(type) {
-            case *reflect.PtrType, *reflect.InterfaceType:
-                // Dereferencja jesli nastepna wartosc to wskaznik lub interfejs
-                *val = new_val
-            default:
-                // Zwracamy wskaznik bez dereferencji
-                break loop
-            }
-
-        case *reflect.InterfaceValue:
-            *val = vt.Elem()
-
-        default:
-            // Zwracamy wartosc po dereferencji
-            break loop
-        }
-    }
-}*/
-
-
-// Funkcja sprawdza zgodnosc typow argumentow. Jesli to konieczne konwertuje
-// argumenty do typu interface{}. Uwaga! Funkcja moze modyfikowac wartosci args.
-/*func argsMatch(ft *reflect.FuncType, args []reflect.Value, method int) int {
-    // Sprawdzamy zgodnosc ilosci argumentow
-    if ft.NumIn() - method != len(args) {
-        return RUN_WRONG_ARG_NUM
-    }
-    // Sprawdzamy zgodnosc typow argumentow
-    for kk, av := range args {
-        at := ft.In(kk + method)
-        //fmt.Printf("DEB: ctx: %s, fun: %s\n", av.Type(), at)
-        if at != av.Type() {
-            // Sprawdzamy czy arguentem funkcji jest typ interface{}
-            if it, ok := at.(*reflect.InterfaceType); ok && it.NumMethod()==0 {
-                // Zmieniamy typ argumentu przekazywanego do funkcji
-                vi := av.Interface()
-                args[kk] = reflect.NewValue(&vi).(*reflect.PtrValue).Elem()
-            } else {
-                return RUN_WRONG_ARG_TYP
-            }
-        }
-    }
-    return RUN_OK
-}*/
 // Funkcja sprawdza zgodnosc typow argumentow. Jesli to konieczne konwertuje
 // argumenty do typu interface{}. Jesli to potrzebna, funkcja odpowiednio
 // dostosowuje args dla funkcji.
@@ -293,16 +241,19 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
             }
 
         case *reflect.MapValue:
-            switch id := name.(type) {
-            case *reflect.IntValue, *reflect.StringValue:
-                if id.Type() != vt.Type().(*reflect.MapType).Key() {
+            kt := vt.Type().(*reflect.MapType).Key()
+            if name.Type() != kt {
+                if it,ok := kt.(*reflect.InterfaceType);ok && it.NumMethod()==0{
+                    // Jesli mapa posiada klucz typu interface{} to
+                    // przeksztalcamy indeks na typ interface{}
+                    vi := name.Interface()
+                    name = reflect.NewValue(&vi).(*reflect.PtrValue).Elem()
+                } else {
                     return nil, RUN_NOT_FOUND
                 }
-                ctx = vt.Elem(id)
-                if ctx == nil {
-                    return nil, RUN_NOT_FOUND
-                }
-            default:
+            }
+            ctx = vt.Elem(name)
+            if ctx == nil {
                 return nil, RUN_NOT_FOUND
             }
 

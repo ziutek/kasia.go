@@ -100,8 +100,7 @@ func skipNewline(frag *string, lnum *int) {
 
 // Parsuje parametr znajdujacy sie na poczatku frag. Pomija biale znaki przed
 // parametrem i usuwa za nim (po wywolaniu frag[0] nie jest bialym znakiem).
-// fl - oznacza czy parametr moze byc liczba zmiennoprzecinkowa.
-func parse1Param(txt *string, lnum *int, fl bool) (
+func parse1Param(txt *string, lnum *int) (
         par interface{}, err os.Error) {
     frag := *txt
 
@@ -135,18 +134,13 @@ func parse1Param(txt *string, lnum *int, fl bool) (
         var iv int
         iv, err = strconv.Atoi(frag[0:ii])
         if err != nil {
-            if fl {
-                var fv float
-                fv, err = strconv.Atof(frag[0:ii])
-                if err != nil {
-                    err = ParseErr{*lnum, PARSE_BAD_FLOINT}
-                    return
-                }
-                par = reflect.NewValue(fv)
-            } else {
-                err = ParseErr{*lnum, PARSE_BAD_INT}
+            var fv float
+            fv, err = strconv.Atof(frag[0:ii])
+            if err != nil {
+                err = ParseErr{*lnum, PARSE_BAD_FLOINT}
                 return
             }
+            par = reflect.NewValue(fv)
         } else {
             par = reflect.NewValue(iv)
         }
@@ -178,7 +172,7 @@ func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
         if frag[0] == '[' {
             // Dynamiczna nazwa w postaci indeksu
             frag = frag[1:]
-            el.name, err = parse1Param(&frag, lnum, false)
+            el.name, err = parse1Param(&frag, lnum)
             if err != nil {
                 return
             }
@@ -224,7 +218,7 @@ func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
             }
 
             // Pobieramy parametr usuwajac otaczajace go biale znaki.
-            arg, err = parse1Param(&frag, lnum, true)
+            arg, err = parse1Param(&frag, lnum)
             if err != nil {
                 return
             }
@@ -343,7 +337,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
         case "if", "elif":
             // Parsujemy zmienna lub funkcje.
             var arg1, arg2 interface{}
-            arg1, err = parse1Param(&frag, lnum, true)
+            arg1, err = parse1Param(&frag, lnum)
             if err != nil {
                 return
             }
@@ -378,7 +372,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
                     err = ParseErr{*lnum, PARSE_IF_ERR}
                     return
                 }
-                arg2, err = parse1Param(&frag, lnum, true)
+                arg2, err = parse1Param(&frag, lnum)
                 if err != nil {
                     return
                 }

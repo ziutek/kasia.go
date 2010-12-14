@@ -44,7 +44,7 @@ func parse2VarFun(vf *VarFunElem) (err os.Error) {
     // Parsujemy sciezke do zmiennej/funkcji
     for vf != nil {
         switch pe := vf.name.(type) {
-        case *reflect.StringValue, *reflect.IntValue, nil:
+        case *reflect.StringValue, *reflect.IntValue, *reflect.FloatValue, nil:
             // Nazwa, indeks liczbowy lub samowywolanie - nic nie robimy.
 
         case []Element:

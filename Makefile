@@ -6,10 +6,10 @@ GOFILES=\
 	parser1.go\
 	parser2.go\
 	parser_err.go\
-	rev_parser.go\
 	getvarfun.go\
 	template.go\
 	compat.go\
+#	rev_parser.go\
 
 include $(GOROOT)/src/Make.pkg
 

@@ -212,8 +212,7 @@ executed in strict mode.
 ## Getting data from a map
 
 If the data context is a map you can use it in a way similar to a struct context.
-The map can be string or int indexed. If the map is string indexed like
-this:
+If the map is has string key like this:
 
     map[string]interface{} {
         "a":    1,
@@ -233,7 +232,7 @@ you can get values from it like this:
     $:d[0](2.1) ==  $:['d'][0](2.1)
     $f(1)       ==  $["f"](1)
 
-If the map is int indexed
+If the map hes int key:
 
     map[int]string {
         -1:     "minus jeden",
@@ -244,6 +243,8 @@ you can only use index notation:
 
     $[-1]
     $[101]
+
+Map may have a key of any type but, you can use directly (without using a variable) only string, int or float key.
 
 ## Escaping
 
