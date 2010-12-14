@@ -30,6 +30,11 @@ tests = []Test{
     `Łódź, róża, łąka, '"$.`, true,
     nil,
 },{
+    // Comments
+    "This is a $#tttt,\n $a, $c\n $# $$ #$ comment!",
+    "This is a  comment!", true,
+    nil,
+},{
     // map: Variable and function
     `$aa, $bc(1)`,
     `Ala, 2`, true,
