@@ -294,6 +294,7 @@ no escaping.
     $end
 
 Value is false when it:
+
 1. Is bool and false.
 2. Is int and equal to 0.
 3. Is float and equal to 0.0.
