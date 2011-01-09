@@ -207,14 +207,8 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
             case *reflect.IntValue:
                 // Zwracamy pole sruktury o podanym indeksie
                 fi := int(id.Get())
-                if fi >= vt.NumField() {
+                if fi < 0 || fi >= vt.NumField() {
                     return nil, RUN_INDEX_OOR
-                }
-                if fi < 0 {
-                    fi += vt.NumField()
-                    if fi < 0 {
-                        return nil, RUN_INDEX_OOR
-                    }
                 }
                 ctx = vt.Field(fi)
             default:
@@ -226,14 +220,8 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
             case *reflect.IntValue:
                 // Zwracamy element tablicy o podanym indeksie
                 ei := int(id.Get())
-                if ei >= vt.Len() {
+                if ei < 0 || ei >= vt.Len() {
                     return nil, RUN_INDEX_OOR
-                }
-                if ei < 0 {
-                    ei += vt.Len()
-                    if ei < 0 {
-                        return nil, RUN_INDEX_OOR
-                    }
                 }
                 ctx = vt.Elem(ei)
             default:

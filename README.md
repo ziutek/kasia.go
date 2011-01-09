@@ -108,8 +108,6 @@ from it like this:
 
     $[0] $[2]
 
-You can use negative indexes similar to Python: `a[-n] == a[len(a)-n]`.
-
 If `$[0]` is an int variable, you can use it as an index:
 
     $[[0]](1.1)
@@ -146,7 +144,6 @@ you can get values from it using the name or index of a field:
     $D[A] ==  $[3][A]   // $A is an integer used as index
     $E.a  ==  $[4].a
     $G.A  ==  $[6][0]
-    $G.A  ==  $[-1][0]  // Index can be negative.
 
 You can use variables or strings to specify struct fields. If $A == 2 and $B == "A"
 then:
