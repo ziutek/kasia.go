@@ -406,6 +406,9 @@ As you can see in the example above, you can use subtemplates in two ways:
 1. Render subtemplate with main context by typing `$tpl1`.
 2. Render subtemplate with custom context: `$tpl2.Nested(custom_context)`.
 
+If you use context itself as parameter to the Nested: `$tpl2.Nested(@)` method
+it will be treated as ordinary slice parameter.
+
 ## Context stack
 
 You can divide the data context into two (or more) parts. For example, the first

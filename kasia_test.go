@@ -164,6 +164,41 @@ func TestAll(t *testing.T) {
     }
 }
 
+type Environment struct {
+    msg_host, msg_path, submit_path, static_path string
+}
+var env = Environment {
+    msg_host:    "www.lnet.pl",
+    msg_path:    "/message/",
+    submit_path: "/submit/",
+    static_path: "/static/",
+}
+
+
+type MsgCtx struct {
+    start_data string
+    tekst      string
+    tpl        *Template
+}
+
+
+func TestMultiCtx(t *testing.T) {
+    divs := map[string]string{"content": "KKKKK"}
+    tpl, _ := Parse("$[0].content $[1].static_path")
+    ctx := MsgCtx{"1234-22-33", "abcd", tpl}
+
+    tpl_txt := "$content $start_data $tekst $msg_host $msg_path $tpl.Nested(@)"
+    out, err := RenderString(tpl_txt, true, divs, env, ctx)
+
+    expect := "KKKKK 1234-22-33 abcd www.lnet.pl /message/ KKKKK /static/"
+
+    if err != nil {
+        t.Fatalf("err: %s", err)
+    } else if out != expect {
+        t.Fatalf("out `%s` expect `%s`", out, expect)
+    }
+
+}
 
 const bench_kt = `
 $for i, v in arr:

@@ -20,6 +20,8 @@ type NestedTemplate struct {
     ctx []interface{}
 }
 
+type ContextItself []interface{}
+
 // Okresla wartosc parametru.
 func execParam(wr io.Writer, par interface{}, ctx []interface{}, ln int,
         strict bool) (ret reflect.Value, err os.Error) {
@@ -82,11 +84,12 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
     // Ustalamy pelna sciezke do zmiennej w kontekscie.
     for pv := vf; pv != nil; pv = pv.next {
         // Okreslenie nazwy/indeksu zmiennej w kontekscie.
-        // Jesli jest dynamiczna, dla bezpieczenstwa, do jaj okreslenia
+        // Jesli jest dynamiczna, dla bezpieczenstwa, do jej okreslenia
         // uzywamy trybu strict.
         switch pe := pv.name.(type) {
         case nil:
             // Brak nazwy wiec elementem sciezki jest czyste wywolanie funkcji
+            // lub sam kontekst.
             name_id = nil
 
         case *reflect.StringValue, *reflect.IntValue, *reflect.FloatValue:
@@ -121,31 +124,42 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         path = append(path, name_id)
     }
 
-    // Poszukujemy poczatku sciezki do zmiennej przechodzac poszczegolne
-    // warstwy kontekstu, rozpoczynajac od warstwy najbardziej lokalnej.
     var args []reflect.Value
     args, err = execArgs(wr, vf, ctx)
     if err != nil {
         return
     }
-    name_id = path[0]
     stat := RUN_OK
-    var run_error bool
-    for ii := len(ctx); ii > 0; {
-        ii--
-        val, stat = getVarFun(reflect.NewValue(ctx[ii]), name_id, args, vf.fun)
-        run_error = (stat != RUN_NOT_FOUND && stat != RUN_NIL_CTX)
-        if stat == RUN_OK || run_error {
-            // Znalezlismy zmienna lub wystapil blad
-            break
+    name_id = path[0]
+    if name_id != nil || len(ctx) == 1 {
+        // Jesli name_id nie wskazuje na sam kontekst lub kontekst jest
+        // jednowarstwowy, poszukujemy poczatku sciezki do zmiennej
+        // przechodzac poszczegolne warstwy kontekstu, rozpoczynajac od
+        // warstwy najbardziej lokalnej (ostatniej na liscie).
+        var run_error bool
+        for ii := len(ctx); ii > 0; {
+            ii--
+            val, stat = getVarFun(
+                reflect.NewValue(ctx[ii]), name_id, args, vf.fun,
+            )
+            run_error = (stat != RUN_NOT_FOUND && stat != RUN_NIL_CTX)
+            if stat == RUN_OK || run_error {
+                // Znalezlismy zmienna lub wystapil blad
+                break
+            }
         }
-    }
-    if stat != RUN_OK {
+        if stat != RUN_OK {
             if strict || run_error {
                 return nil, RunErr{vf.ln, stat, nil}
             }
             return nil, nil
+        }
+    } else {
+        // Poczatek sciezki wskazuje na sam wielowarstwowy kontekst.
+        // Traktujemy go jako normalna wartosc typu slice
+        val = reflect.NewValue(ContextItself(ctx))
     }
+
     // Poczatek sciezki do zmiennej znaleziony - przechodzimy reszte.
     for _, name_id = range path[1:] {
         vf = vf.next
