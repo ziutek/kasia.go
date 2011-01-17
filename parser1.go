@@ -60,7 +60,7 @@ func findCharEsc(txt, chars string, lnum *int) int {
 const (
     seps_newline = "\n\r"
     seps_white   = seps_newline + " \t"
-    seps_nnum    = seps_white + "`~!@#$%^&*={}|\\,;<>?/()[]:\"'"
+    seps_nnum    = seps_white + "~!@#$%^&*={}|\\,;<>?/()[]:`\"'"
     seps_num     = "+-."
     seps         = seps_nnum + seps_num
     digits       = "1234567890"
@@ -110,7 +110,7 @@ func parse1Param(txt *string, lnum *int) (
         return
     }
 
-    if frag[0] == '"' || frag[0] == '\'' {
+    if frag[0] == '"' || frag[0] == '\'' || frag[0] == '`' {
         // Parametrem jest tekst.
         txt_sep := frag[0:1]
         frag = frag[1:]
@@ -520,7 +520,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
                 }
                 elems = append(elems, vf)
 
-            case '$', '"', '\'':
+            case '$', '"', '\'', '`':
                 // Escape sequence
                 elems = append(elems, &TxtElem{*lnum, frag[0:1]})
                 frag = frag[1:]

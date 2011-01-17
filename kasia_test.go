@@ -26,14 +26,19 @@ tpl1, _ = Parse("$a $b")
 tests = []Test{
 {
     // Text in UTF-8 encoding
-    `Łódź, róża, łąka, $'$"$$.`,
-    `Łódź, róża, łąka, '"$.`, true,
+    "Łódź, róża, łąka, $'$\"$`$$.",
+    "Łódź, róża, łąka, '\"`$.", true,
     nil,
 },{
     // Comments
     "This is a $#tttt,\n $a, $c\n $# $$ #$ comment!",
     "This is a  comment!", true,
     nil,
+},{
+    // map: []byte
+    `$aa`,
+    `Ala`, true,
+    map[string]interface{}{"aa": []byte("Ala")},
 },{
     // map: Variable and function
     `$aa, $bc(1), $@.aa, $@.bc(1)`,
@@ -68,8 +73,8 @@ tests = []Test{
         },
 },{
     // struct: 'if', funkcja zwracajaca funkcje, complex
-    `$if f(1)('str')(2.1) == c: OK $end $f(a)("eeee")(b) $if b==2.1:$a$b$c$end`,
-    ` OK  (6+2.1i) 22.1(4+2.1i)`, true,
+    `$if f(1)('str')(2.1) == c:OK $end $f(a)("eeee")(b) $if b==2.1:$a$b$c$end`,
+    `OK  (6+2.1i) 22.1(4+2.1i)`, true,
     struct {
         f func(int)func(string)func(float)complex
         a int
@@ -108,7 +113,7 @@ tests = []Test{
     },
 },{
     // map: DotDotDot function, interface args
-    `$fun(1) $fun(1, 2.2) $fun(1, 2.2, "text") $fun(1, 2.2, "text", val)`,
+    "$fun(1) $fun(1, 2.2) $fun(1, 2.2, 'text') $fun(1, 2.2, `text`, val)",
     "1\n 1 2.2\n 1 2.2 text\n 1 2.2 text true\n", true,
     map[string]interface{} {
         "fun": func(n ...interface{}) string {
