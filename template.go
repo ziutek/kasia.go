@@ -213,6 +213,13 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                 if err != nil {
                     return RunErr{el.ln, RUN_NESTED, err}
                 }
+            case []byte:
+                // Raw text
+                if el.filt && tpl.EscapeFunc != nil {
+                    err = tpl.EscapeFunc(wr, string(vtn))
+                } else {
+                    _, err = wr.Write(vtn)
+                }
             default:
                 // Zwykla zmienna
                 if el.filt && tpl.EscapeFunc != nil {

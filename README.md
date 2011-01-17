@@ -199,12 +199,17 @@ You can explicitly specify variables or function boundaries using braces:
 
     eee${A}eee uuu$:{A}uuu
 
-By default, if a variable doesn't exist you get an empty string. You can change this
-behavior by setting `Template.Strict` to true. Undefined variables now return an error code.
-If a variable is used as argument to a function or an index it is always
-executed in strict mode.
+By default, if a variable doesn't exist you get an empty string. You can change
+this behavior by setting `Template.Strict` to true. Undefined variables now
+return an error code.  If a variable is used as argument to a function or an
+index it is always executed in strict mode.
 
-`fmt.Fprint()` and `fmt.Sprint()` are used to render variable values.
+If variable is []byte slice its content is treated as text. It is better use
+[]byte than string if you don't use escaping, because it doesn't need conversion
+before write to io.Writer.
+
+`fmt.Fprint()` and `fmt.Sprint()` are used to render a different type
+of variables.
 
 ## Getting data from a map
 
