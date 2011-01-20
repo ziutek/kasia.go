@@ -15,7 +15,7 @@ type Test struct {
 
 type S1 struct {
     a int
-    b float
+    b float64
 }
 
 var (
@@ -58,7 +58,7 @@ tests = []Test{
     // map: Float key, not strict mode
     `'$[0.1]', '$[-1.1]', '$[2.2]'`,
     `'a', 'b', ''`, false,
-    map[float]string{0.1: "a", -1.1: "b"},
+    map[float64]string{0.1: "a", -1.1: "b"},
 },{
     // map: Any key, any value
     "$[1]\n$[2.2]\n$[i]\n$[t]\n$i\n$t\n",
@@ -66,9 +66,9 @@ tests = []Test{
     map[interface{}]interface{} {
         1           : "a",
         2.2         : "b",
-        cmplx(0,1)  : -1.9,
+        complex(0,1)  : -1.9,
         true        : 100,
-        "i"         : cmplx(0,1),
+        "i"         : complex(0,1),
         "t"         : true,
         },
 },{
@@ -76,21 +76,21 @@ tests = []Test{
     `$if f(1)('str')(2.1) == c:OK $end $f(a)("eeee")(b) $if b==2.1:$a$b$c$end`,
     `OK  (6+2.1i) 22.1(4+2.1i)`, true,
     struct {
-        f func(int)func(string)func(float)complex
+        f func(int)func(string)func(float64)complex128
         a int
-        b float
-        c complex
+        b float64
+        c complex128
     } {
-        func(i int) func(string)func(float)complex {
-            return func(s string) func(float)complex {
-                return func(f float) complex {
-                    return cmplx(float(i + len(s)), f)
+        func(i int) func(string)func(float64)complex128 {
+            return func(s string) func(float64)complex128 {
+                return func(f float64) complex128 {
+                    return complex(float64(i + len(s)), f)
                 }
             }
         },
         2,
         2.1,
-        cmplx(4, 2.1),
+        complex(4, 2.1),
     },
 },{
     // struct: 'if' jednoargumentowy, funkcja bez argumentow
@@ -140,7 +140,7 @@ tests = []Test{
         "a":   1,
         "b":   1.1,
         "ctx1": S1{2, 2.2},
-        "ctx2": map[string]float{"b": 3.3},
+        "ctx2": map[string]float64{"b": 3.3},
     },
 },{
     //int
@@ -221,7 +221,7 @@ func BenchmarkFor(b *testing.B) {
     // Szykujemy dane
     for ii := 0; ii < len(bctx.arr); ii++ {
         bctx.arr[ii].a = ii*ii
-        bctx.arr[ii].b = 1.0 / (1.0 + float(ii))
+        bctx.arr[ii].b = 1.0 / (1.0 + float64(ii))
     }
     // Tworzymy szablon
     tpl := New()

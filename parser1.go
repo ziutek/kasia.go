@@ -134,8 +134,8 @@ func parse1Param(txt *string, lnum *int) (
         var iv int
         iv, err = strconv.Atoi(frag[0:ii])
         if err != nil {
-            var fv float
-            fv, err = strconv.Atof(frag[0:ii])
+            var fv float64
+            fv, err = strconv.Atof64(frag[0:ii])
             if err != nil {
                 err = ParseErr{*lnum, PARSE_BAD_FLOINT}
                 return

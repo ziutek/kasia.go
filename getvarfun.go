@@ -288,7 +288,7 @@ func getBool(val reflect.Value) bool {
     case *reflect.ChanValue:
         return !av.IsNil()
     case *reflect.ComplexValue:
-        return av.Get() != cmplx(0, 0)
+        return av.Get() != complex(0, 0)
     case *reflect.FloatValue:
         return av.Get() != 0.0
     case *reflect.FuncValue:
