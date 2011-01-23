@@ -60,6 +60,11 @@ tests = []Test{
     `'a', 'b', ''`, false,
     map[float64]string{0.1: "a", -1.1: "b"},
 },{
+    // map: if elif
+    `$if kind.a: A $elif kind.b: B $else: unk $end`,
+    ` B `, true,
+    struct{kind map[string]bool}{map[string]bool{"b": true}},
+},{
     // map: Any key, any value
     "$[1]\n$[2.2]\n$[i]\n$[t]\n$i\n$t\n",
     "a\nb\n-1.9\n100\n(0+1i)\ntrue\n", true,
