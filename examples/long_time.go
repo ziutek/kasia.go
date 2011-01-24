@@ -37,7 +37,7 @@ func main() {
 
     data_slice := []interface{}{
         1,
-        func(f float) string {
+        func(f float64) string {
             return fmt.Sprintf("First value >%f<.", f)
         },
         "text in slice",
@@ -91,8 +91,8 @@ func main() {
         }
         end := time.Nanoseconds()
         fmt.Printf("Rendered %d*%d B: %.0f r/s, %.0f kB/s\n",
-            ii*n, len(txt), 1e9 * float(n) / float(end-bgn),
-            1e6 * float(len(txt) * n) / float(end-bgn))
+            ii*n, len(txt), 1e9 * float64(n) / float64(end-bgn),
+            1e6 * float64(len(txt) * n) / float64(end-bgn))
 
     }
 }

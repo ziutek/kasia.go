@@ -1,6 +1,6 @@
 include $(GOROOT)/src/Make.inc
 
-ALL=simple webgo_nested webgo_ctxstack long_time
+ALL=simple webgo_nested webgo_ctxstack long_time pointers
 
 all: $(ALL)
 
