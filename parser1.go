@@ -1,8 +1,8 @@
 package kasia
 
 import (
-    str "strings"
-    uni "unicode"
+    "strings"
+    "unicode"
     "strconv"
     "os"
     "reflect"
@@ -10,7 +10,7 @@ import (
 
 func findChar(txt, chars string, lnum *int) int {
     for ii, cc := range txt {
-        if str.IndexRune(chars, cc) != -1 {
+        if strings.IndexRune(chars, cc) != -1 {
             return ii
         }
         if cc == '\n' {
@@ -22,7 +22,7 @@ func findChar(txt, chars string, lnum *int) int {
 
 func findNotChar(txt, chars string, lnum *int) int {
     for ii, cc := range txt {
-        if str.IndexRune(chars, cc) == -1 {
+        if strings.IndexRune(chars, cc) == -1 {
             return ii
         }
         if cc == '\n' {
@@ -123,8 +123,8 @@ func parse1Param(txt *string, lnum *int) (
         if err != nil {
             return
         }
-    } else if uni.IsDigit(int(frag[0])) ||
-            str.IndexRune(seps_num, int(frag[0])) != -1 {
+    } else if unicode.IsDigit(int(frag[0])) ||
+            strings.IndexRune(seps_num, int(frag[0])) != -1 {
         // Parametrem jest liczba
         ii := findChar(frag, seps_nnum, lnum)
         if ii == -1 {
@@ -189,7 +189,7 @@ func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
         } else if frag[0] == '(' {
             // Bezposrednie wywolanie funkcji na samym kontekscie
             el.name = nil
-        } else if str.IndexRune(not_letters, int(frag[0])) == -1 {
+        } else if strings.IndexRune(not_letters, int(frag[0])) == -1 {
             // Nazwa statyczna
             ii := findChar(frag, seps, lnum)
             if ii == -1 {
@@ -243,7 +243,7 @@ func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
 
     // Jesli to nie jest koniec sciezki dodajemy kolejna zmienna
     if len(frag) > 1 && frag[0] == '.' &&
-            str.IndexRune(not_letters, int(frag[1])) == -1 {
+            strings.IndexRune(not_letters, int(frag[1])) == -1 {
         // Kropka po ktorej nastepuje litera oznacza kolejny element sciezki.
         frag = frag[1:]
         el.next = el // Oznaczamy ze jest nastepna zmienna
