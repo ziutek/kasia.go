@@ -4,7 +4,6 @@ import (
     "os"
     "io"
     "fmt"
-    str "strings"
     "bytes"
     "reflect"
 )
@@ -367,20 +366,12 @@ func New() *Template {
     return &tpl
 }
 
+
 func WriteEscapedHtml(wr io.Writer, txt string) (err os.Error) {
     var esc string
-    for len(txt) > 0 {
-        ii := str.IndexAny(txt, "&'<>\"")
-        if ii == -1 {
-            _, err = io.WriteString(wr, txt)
-            return
-        } else {
-            _, err = io.WriteString(wr, txt[0:ii])
-            if err != nil {
-                return
-            }
-        }
-        switch txt[ii] {
+    last := 0
+    for ii, bb := range txt {
+        switch bb {
         case '&':
             esc = "&amp;"
         case '\'':
@@ -392,10 +383,16 @@ func WriteEscapedHtml(wr io.Writer, txt string) (err os.Error) {
         case '"':
             esc = "&quot;"
         default:
-            panic("unknown escape character")
+            continue
         }
-        _, err = io.WriteString(wr, esc)
-        txt = txt[ii+1:]
+        if _, err = io.WriteString(wr, txt[last:ii]); err != nil {
+            return
+        }
+        if _, err = io.WriteString(wr, esc); err != nil {
+            return
+        }
+        last = ii + 1
     }
+    _, err = io.WriteString(wr, txt[last:])
     return
 }
