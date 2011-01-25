@@ -61,7 +61,6 @@ func (re RunErr) String() (txt string) {
 
 // Pelna dereferencja wskaznikow i interfejsow
 func dereference(val *reflect.Value) {
-loop:
     for {
         switch vt := (*val).(type) {
         case *reflect.PtrValue:
@@ -71,7 +70,7 @@ loop:
             *val = vt.Elem()
 
         default:
-            break loop
+            return
         }
     }
 }
@@ -125,7 +124,7 @@ func argsMatch(ft *reflect.FuncType, args *[]reflect.Value, method int) int {
     it, ok := at.(*reflect.InterfaceType)
     at_is_interface := (ok && it.NumMethod() == 0)
     // Przygotowujemy miejsce na argumenty
-    ddd := reflect.MakeSlice(st, len(tail_args), cap(tail_args))
+    ddd := reflect.MakeSlice(st, len(tail_args), len(tail_args))
     for kk, av := range tail_args {
         if at != av.Type() {
             // Sprawdzamy czy arguentem funkcji jest typ interface{}
@@ -181,7 +180,9 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
                 }
                 // Zwracamy pierwsza wartosc zwrocona przez metode
                 ctx = ctx.Method(ii).Call(args)[0]
+                // Nie pozwalamy na dalsza analize nazwy
                 name = nil
+                // Nie pozwalamy na traktowanie zwroconej zmiennej jak funkcji
                 args = nil
                 fun = false
                 break
@@ -309,7 +310,7 @@ func getBool(val reflect.Value) bool {
     return true
 }
 
-// Porownuje argumenty Wczesniej przeprowadza ich pelna dereferencje.
+// Porownuje argumenty. Wczesniej przeprowadza ich pelna dereferencje.
 func getCmp(arg1, arg2 reflect.Value, cmp int) (tf bool, stat int) {
     dereference(&arg1)
     dereference(&arg2)
