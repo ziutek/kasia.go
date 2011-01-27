@@ -20,7 +20,6 @@ $D[A] ==  $[3][A]   // $A is integer used as index
 $:E.a  ==  $:[4].a
 $:E.b  ==  $:[4].b
 $G.A  ==  $[6][0]
-$G.A  ==  $[-1][0]  // Index can be negative.
 
 $:M1
 $M1()

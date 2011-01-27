@@ -2,7 +2,7 @@ package main
 
 import (
     "os"
-    "kasia"
+    "github.com/ziutek/kasia.go"
 )
 
 type Person struct {

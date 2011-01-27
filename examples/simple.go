@@ -1,9 +1,9 @@
 package main
 
 import (
-    "kasia"
     "os"
     "fmt"
+    "github.com/ziutek/kasia.go"
 )
 
 type Ctx struct {

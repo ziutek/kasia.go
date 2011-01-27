@@ -14,8 +14,26 @@ Kasia is my daughter's name (Polish equivalent of Katie or Kathy).
 
 ## Installing Kasia.go
 
+### Using *goinstall* - prefered way:
+
+    $ goinstall github.com/ziutek/kasia.go
+
+After this command *kasia.go* package is ready to use. You may find source in
+
+    $GOROT/src/pkg/github.com/ziutek/kasia.go
+
+directory. If you install *Kasia.go* this way you must use full path to import
+it into your application.
+
+You can use `goinstall -u -a` for update all installed packages.
+
+### Using *git clone* command:
+
     $ git clone git://github.com/ziutek/kasia.go
     $ cd kasia.go && make install
+
+but it isn't preferred way. Because examples (and perhaps other packages)
+use full path (*github.com/ziutek/kasia.go*) for import.
 
 ## Using "Kasia.go"
 
@@ -31,9 +49,9 @@ The simplest example is:
     package main
 
     import (
-        "kasia"
         "os"
         "fmt"
+        "github.com/ziutek/kasia.go"
     )
 
     type Ctx struct {
@@ -56,7 +74,12 @@ The simplest example is:
         }
     }
 
-More examples are in *examples* directory
+More examples are in *examples* directory. You need to install *web.go* for
+some of them:
+
+    $ goinstall github.com/hoisie/web.go
+
+
 
 There are a few methods/functions for Go template compatibility:
 

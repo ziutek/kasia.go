@@ -3,7 +3,7 @@ package main
 import (
     "fmt"
     "time"
-    "kasia"
+    "github.com/ziutek/kasia.go"
 )
 
 type ContextData struct {
