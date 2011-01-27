@@ -32,9 +32,6 @@ You can use `goinstall -u -a` for update all installed packages.
     $ git clone git://github.com/ziutek/kasia.go
     $ cd kasia.go && make install
 
-but it isn't preferred way. Because examples (and perhaps other packages)
-use full path (*github.com/ziutek/kasia.go*) for import.
-
 ## Using "Kasia.go"
 
 Kasia's native interface contains one function and three methods:

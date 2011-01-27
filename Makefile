@@ -1,6 +1,6 @@
 include $(GOROOT)/src/Make.inc
 
-TARG=kasia
+TARG=github.com/ziutek/kasia.go
 GOFILES=\
 	parser_elements.go\
 	parser1.go\
