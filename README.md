@@ -20,7 +20,7 @@ Kasia is my daughter's name (Polish equivalent of Katie or Kathy).
 
 After this command *kasia.go* package is ready to use. You may find source in
 
-    $GOROT/src/pkg/github.com/ziutek/kasia.go
+    $GOROOT/src/pkg/github.com/ziutek/kasia.go
 
 directory. If you install *Kasia.go* this way you must use full path to import
 it into your application.
