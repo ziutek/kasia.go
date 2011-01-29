@@ -464,9 +464,9 @@ You can pass them together to the *Run* method:
         }
     }
 
-When `$b` occurs in a template, *Run* first looks for it *ld*, and only if it
+When `$b` occurs in a template, *Run* first looks for it in *ld*, and only if it
 doesn't find it, looks for it in *data*.
 
-You can only set the global context once, but you can set the local context in
-each call to *hello()*. Additionally, if *ld* isn't nil, the *b* field in *ld*
+You may set the global data once and use they together wit local data created
+each *hello()* call. Additionally, if *ld* isn't nil, the *b* field in *ld*
 will be rendered, not the *b* field in *data*.
