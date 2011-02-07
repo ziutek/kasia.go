@@ -130,25 +130,30 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
     }
     stat := RUN_OK
     name_id = path[0]
-    if name_id != nil || len(ctx) == 1 {
-        // Jesli name_id nie wskazuje na sam kontekst lub kontekst jest
-        // jednowarstwowy, poszukujemy poczatku sciezki do zmiennej
-        // przechodzac poszczegolne warstwy kontekstu, rozpoczynajac od
-        // warstwy najbardziej lokalnej (ostatniej na liscie).
-        var run_error bool
+    // name_id == nil tylko wtedy gdy na poczatku sciezki jest sam kontekst '$@'
+    // lub czyste wywolanie funkcji '$(...)'
+    if name_id != nil || vf.fun {
+        // Poszukujemy zmiennej lub funkcji pasujacej do poczatku sicezki
         for ii := len(ctx); ii > 0; {
             ii--
             val, stat = getVarFun(
                 reflect.NewValue(ctx[ii]), name_id, args, vf.fun,
             )
-            run_error = (stat != RUN_NOT_FOUND && stat != RUN_NIL_CTX)
-            if stat == RUN_OK || run_error {
+            if stat == RUN_OK {
                 // Znalezlismy zmienna lub wystapil blad
                 break
             }
+            // Blad oznacza ze dana skladowa kontekstu nie pasuje do atrybutu,
+            // czyli wystepuje jeden z ponizszych bledow:
+            // - skladowa nie zawiera atrybutu o podanej nazwie,
+            // - skladowa nie zawiera atrybutu o podanym indeksie,
+            // - skladowa jest rowna nil,
+            // - skladowa mie pasuje do zadanego wywolania funkcj (nie jest
+            //   funkcja lub nie pasuje pod wzgledem argumentow).
+            // Na obecna chwile getVarFun nie zwraca innych bledow.
         }
         if stat != RUN_OK {
-            if strict || run_error {
+            if strict {
                 return nil, RunErr{vf.ln, stat, nil}
             }
             return nil, nil

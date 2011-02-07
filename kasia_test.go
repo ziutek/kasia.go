@@ -41,13 +41,13 @@ tests = []Test{
     map[string]interface{}{"aa": []byte("Ala")},
 },{
     // map: Variable and function
-    `$aa, $bc(1), $@.aa, $@.bc(1)`,
-    `Ala, 2, Ala, 2`, true,
+    `$aa, $bc(1)`,
+    `Ala, 2`, true,
     map[string]interface{}{"aa": "Ala", "bc": func(i int)int{return 2*i}},
 },{
     // map: Variable and function, string key
-    `$["aa"], $['bc'](1), $@["aa"]`,
-    `Ala, 2, Ala`, true,
+    `$["aa"], $['bc'](1)`,
+    `Ala, 2`, true,
     map[string]interface{}{"aa": "Ala", "bc": func(i int)int{return 2*i}},
 },{
     // map: Integer key, not strict mode
@@ -104,7 +104,7 @@ tests = []Test{
     struct {f *func()int}{&f1},
 },{
     // func:
-    `$((((((((1)))))))) $(0) $@(1) $@((-2))`,
+    `$((((((((1)))))))) $(0) $(1) $((-2))`,
     `9 1 2 0`, true,
     func (i int) int {i++; return i},
 },{
@@ -149,28 +149,32 @@ tests = []Test{
     },
 },{
     //int
-    `$@ $@.`, `7 7.`, true, 7,
+    `$@[0] $@[0].`, `7 7.`, true, 7,
 },{
     //string: HTML escaping
-    `$@ $:@`, `&amp;&apos;&lt;&gt;&quot; &'<>"`, true, `&'<>"`,
+    `$@[0] $:@[0]`, `&amp;&apos;&lt;&gt;&quot; &'<>"`, true, `&'<>"`,
 },
 }
 
 )
 
+func check(t *testing.T, tpltxt, exp string, strict bool, ctx ...interface{}) {
+    out, err := RenderString(tpltxt, strict, ctx...)
+    str := ""
+    if strict {
+        str = "!"
+    }
+    if err != nil {
+        t.Fatalf("`%s`%s err: %s", tpltxt, str, err)
+    } else if out != exp {
+        t.Fatalf("`%s`%s out `%s` expect `%s`", tpltxt, str, out, exp)
+    }
+}
+
+
 func TestAll(t *testing.T) {
     for _, te := range tests {
-        out, err := RenderString(te.txt, te.strict, te.ctx)
-        strict := ""
-        if te.strict {
-            strict = "!"
-        }
-        if err != nil {
-            t.Fatalf("`%s`%s err: %s", te.txt, strict, err)
-        } else if out != te.expect {
-            t.Fatalf("`%s`%s out `%s` expect `%s`",
-                te.txt, strict, out, te.expect)
-        }
+        check(t, te.txt, te.expect, te.strict, te.ctx)
     }
 }
 
@@ -191,23 +195,44 @@ type MsgCtx struct {
     tpl        *Template
 }
 
-
 func TestMultiCtx(t *testing.T) {
     divs := map[string]string{"content": "KKKKK"}
     tpl, _ := Parse("$[0].content $[1].static_path")
     ctx := MsgCtx{"1234-22-33", "abcd", tpl}
 
     tpl_txt := "$content $start_data $tekst $msg_host $msg_path $tpl.Nested(@)"
-    out, err := RenderString(tpl_txt, true, divs, env, ctx)
-
     expect := "KKKKK 1234-22-33 abcd www.lnet.pl /message/ KKKKK /static/"
 
-    if err != nil {
-        t.Fatalf("err: %s", err)
-    } else if out != expect {
-        t.Fatalf("out `%s` expect `%s`", out, expect)
-    }
+    check(t, tpl_txt, expect, true, divs, env, ctx)
+}
 
+func TestMultiFuncCtx(t *testing.T) {
+    fun1 := func(a int) int { return 2 * a }
+    fun2 := func() string { return "N" }
+    fun3 := func(a int, s string) string { return fmt.Sprintf("%d:%s", a, s) }
+
+    tpl_txt := "$(1) $() $(3, 'aaa')"
+    expect := "2 N 3:aaa"
+
+    check(t, tpl_txt, expect, true, fun1, fun2, fun3, "bla bla")
+}
+
+func TestMultiSlice(t *testing.T) {
+    s1 := []float32{1.1, 2.2, 3.3}
+    s2 := []string{"a", "b"}
+    s3 := []int{1}
+
+    tpl_txt := "$[0] $[1] $[2]"
+    expect := "1 b 3.3"
+
+    check(t, tpl_txt, expect, true, s1, s2, s3, "bla bla")
+}
+
+func TestCtxStackUnstr(t *testing.T) {
+    tpl_txt := "$@[0] $@[1] $@[2]"
+    expect := "2 Ala 3.14159"
+
+    check(t, tpl_txt, expect, true, 2, "Ala", 3.14159)
 }
 
 const bench_kt = `

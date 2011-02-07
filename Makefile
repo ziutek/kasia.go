@@ -9,7 +9,6 @@ GOFILES=\
 	getvarfun.go\
 	template.go\
 	compat.go\
-#	rev_parser.go\
 
 include $(GOROOT)/src/Make.pkg
 

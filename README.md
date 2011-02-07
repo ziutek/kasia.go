@@ -265,21 +265,6 @@ you can only use index notation:
 
 Map may have a key of any type but, you can use directly (without using a variable) only string, int or float key.
 
-## Render the context itself
-
-If the context is a single value, without internal structure, you can use it
-like this:
-
-    $@
-
-*@* means context itself, and thus may occur at the begining of any path:
-
-    $@.a    == $a
-    $@.a.b  == $a.b
-    $@(2)   == $(2)
-    $@[1]   == $[1]
-    $@["b"] == $["b"] == $b
-
 ## Escaping
 
 If you create template using the `New()` function, all values are rendered HTML
@@ -428,9 +413,6 @@ As you can see in the example above, you can use subtemplates in two ways:
 1. Render subtemplate with main context by typing `$tpl1`.
 2. Render subtemplate with custom context: `$tpl2.Nested(custom_context)`.
 
-If you use context itself as parameter to the Nested: `$tpl2.Nested(@)` method
-it will be treated as ordinary slice parameter.
-
 ## Context stack
 
 You can divide the data context into two (or more) parts. For example, the first
@@ -470,3 +452,17 @@ doesn't find it, looks for it in *data*.
 You may set the global data once and use they together wit local data created
 each *hello()* call. Additionally, if *ld* isn't nil, the *b* field in *ld*
 will be rendered, not the *b* field in *data*.
+
+You could create a context stack using the values without internal structure:
+
+    tpl.Run(2, "Ala", 3.14159)
+
+To render such values you should use *@* symbol:
+
+    $@[0]  $@[1]  $@[2]
+
+Output:
+
+    2  Ala  3.14159
+
+*@* means context stack itself and behaves like ordinary slice.
