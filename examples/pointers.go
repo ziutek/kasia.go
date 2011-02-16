@@ -16,5 +16,5 @@ func main() {
     name := "Oliver"
     age := 37
     p := &Person{&name, &age}
-    tpl.Execute(p, os.Stdout)
+    tpl.Execute(os.Stdout, p)
 }

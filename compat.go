@@ -46,7 +46,7 @@ func RenderString(txt string, strict bool, ctx ...interface{}) (
 
 // Funkcje i metody kompatybilne z Go template
 
-func (tpl *Template) Execute(data interface{}, wr io.Writer) os.Error {
+func (tpl *Template) Execute(wr io.Writer, data interface{}) os.Error {
     return tpl.Run(wr, data)
 }
 
@@ -67,11 +67,27 @@ func Parse(txt string) (tpl *Template, err os.Error) {
     return
 }
 
+func MustParse(txt string) (tpl *Template) {
+    tpl, err := Parse(txt)
+    if err != nil {
+        panic(err)
+    }
+    return
+}
+
 func ParseFile(filename string) (tpl *Template, err os.Error) {
     tpl = New()
     err = tpl.ParseFile(filename)
     if err != nil {
         tpl = nil
+    }
+    return
+}
+
+func MustParseFile(filename string) (tpl *Template) {
+    tpl, err := ParseFile(filename)
+    if err != nil {
+        panic(err)
     }
     return
 }
