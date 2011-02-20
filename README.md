@@ -73,11 +73,13 @@ some of them:
 
     $ goinstall github.com/hoisie/web.go
 
+See [simple_go_wiki tutorial](https://github.com/ziutek/simple_go_wiki) for
+example usage of Kasia.go in simple Wiki.
 
 
 There are a few methods/functions for Go template compatibility:
 
-    func (*Template) Execute(data interface{}, wr io.Writer) os.Error
+    func (*Template) Execute(wr io.Writer, data interface{}) os.Error
     func (*Template) ParseFile(filename string) os.Error
     func Parse(txt string) (*Template, os.Error)
     func MustParse(txt string) *Template
