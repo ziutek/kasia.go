@@ -153,6 +153,11 @@ tests = []Test{
 },{
     //string: HTML escaping
     `$@[0] $:@[0]`, `&amp;&apos;&lt;&gt;&quot; &'<>"`, true, `&'<>"`,
+},{
+    //map: iterate over map
+    "$for k, v in @[0]: $k: $v $end",
+    " a: 11  34: aa ", true,
+    map[interface{}]interface{} {"a": 11, 34: "aa"},
 },
 }
 

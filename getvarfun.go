@@ -15,6 +15,7 @@ const (
     RUN_UNK_TYPE
     RUN_NOT_FUNC
     RUN_NIL_CTX
+    RUN_INC_MAP_KEY
     RUN_NESTED
     CMP_NMATCH
     CMP_ARRSLIC
@@ -42,6 +43,7 @@ func (re RunErr) String() (txt string) {
         "unknown type",
         "not a function",
         "nil context",
+        "can't increment map key",
         "nested template error",
         "can't compare, values don't match",
         "can't compare logical values",

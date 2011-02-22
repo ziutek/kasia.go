@@ -283,11 +283,10 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
             // W tym momencie val moze zawierac: nil, tablice lub skalar
             switch vv := val.(type) {
             case reflect.ArrayOrSliceValue:
-                // Zmienna jest typu tablicowego
                 if vv.Len() != 0 {
                     // Niepusta tablica.
                     for_tpl.elems = el.iter_block
-                    // Tworzymy kontekst dla iteracyjnego bloku for.
+                    // Tworzymy kontekst dla iteracyjnego bloku for
                     local_ctx := map[string]interface{}{}
                     for_ctx := append(ctx, local_ctx)
                     for ii := 0; ii < vv.Len(); ii++ {
@@ -305,6 +304,37 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                     }
                 } else {
                     // Pusta tablica
+                    for_tpl.elems = el.else_block
+                    err = for_tpl.Run(wr, ctx...)
+                    if err != nil {
+                        return
+                    }
+                }
+            case *reflect.MapValue:
+                if vv.Len() != 0 {
+                    // Niepusty slownik
+                    if el.iter_inc != 0 {
+                        return RunErr{el.ln, RUN_INC_MAP_KEY, nil}
+                    }
+                    for_tpl.elems = el.iter_block
+                    // Tworzymy kontekst dla iteracyjnego bloku for
+                    local_ctx := map[string]interface{}{}
+                    for_ctx := append(ctx, local_ctx)
+                    for _, key := range vv.Keys() {
+                        ev := vv.Elem(key)
+                        if ev == nil {
+                            local_ctx[el.val] = nil
+                        } else {
+                            local_ctx[el.val] = ev.Interface()
+                        }
+                        local_ctx[el.iter] = key.Interface()
+                        err = for_tpl.Run(wr, for_ctx...)
+                        if err != nil {
+                            return
+                        }
+                    }
+                } else {
+                    // Pusty slownik
                     for_tpl.elems = el.else_block
                     err = for_tpl.Run(wr, ctx...)
                     if err != nil {
