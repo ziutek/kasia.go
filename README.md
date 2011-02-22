@@ -345,9 +345,9 @@ You can use braces for all statements (useful for `$end` statement):
         D == nil or len(D) == 0
     $end
 
-D can be any type. If it's an array or a slice, the first block is
-executed for each of element, v = element value, i = element index. If value
-is a scalar, v = value, i = 0. If you add '+' to the index name:
+D can be any type. If it's an array, a slice or a map, the first block is
+executed for each element of it and v = element value, i = element index or key.
+If value is a scalar, v = value, i = 0. If you add '+' to the index name:
 
     $for i+, v in D:
         $i...
