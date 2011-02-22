@@ -347,13 +347,14 @@ You can use braces for all statements (useful for `$end` statement):
 
 D can be any type. If it's an array, a slice or a map, the first block is
 executed for each element of it and v = element value, i = element index or key.
-If value is a scalar, v = value, i = 0. If you add '+' to the index name:
+If value is a scalar, v = value, i = nil. If you add '+' to the index name:
 
     $for i+, v in D:
         $i...
     $end
 
-index will be increased by one.
+index will be increased by one. You can't increment the map key if you iterate
+over map even if map key is integer.
 
 If there is newline after *if*, *for*, *else*, *end* statement, this new
 line isn't printed. If you want print this new line, insert this statement in

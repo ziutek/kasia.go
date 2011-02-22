@@ -357,7 +357,7 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                         ctx,
                         map[string]interface{} {
                             el.val:  vv.Interface(),
-                            el.iter: el.iter_inc,
+                            el.iter: nil,
                         },
                     )...
                 )
