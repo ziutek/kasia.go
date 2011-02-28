@@ -6,7 +6,7 @@ type Element interface {
 
 type TxtElem struct {
     ln  int
-    txt string
+    txt []byte
 }
 func (self *TxtElem) lnum() int { return self.ln }
 

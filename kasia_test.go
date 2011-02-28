@@ -2,7 +2,6 @@ package kasia
 
 import (
     "testing"
-    "bytes"
     "fmt"
 )
 
@@ -238,38 +237,4 @@ func TestCtxStackUnstr(t *testing.T) {
     expect := "2 Ala 3.14159"
 
     check(t, tpl_txt, expect, true, 2, "Ala", 3.14159)
-}
-
-const bench_kt = `
-$for i, v in arr:
-    $i: $v.a, $v.b
-$end
-`
-
-var bctx = struct {
-    arr [1000]S1
-}{}
-
-
-func BenchmarkFor(b *testing.B) {
-    b.StopTimer()
-    // Szykujemy dane
-    for ii := 0; ii < len(bctx.arr); ii++ {
-        bctx.arr[ii].a = ii*ii
-        bctx.arr[ii].b = 1.0 / (1.0 + float64(ii))
-    }
-    // Tworzymy szablon
-    tpl := New()
-    tpl.Parse(bench_kt)
-    tpl.Strict = true
-    var buf bytes.Buffer
-    // Startujemy test
-    b.StartTimer()
-    for ii := 0; ii < b.N; ii++ {
-        buf.Reset()
-        err := tpl.Run(&buf, bctx)
-        if err != nil {
-            panic(err)
-        }
-    }
 }

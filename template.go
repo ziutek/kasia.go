@@ -11,7 +11,7 @@ import (
 type Template struct {
     elems      []Element
     Strict     bool
-    EscapeFunc func(io.Writer, string) os.Error
+    EscapeFunc func(io.Writer, []byte) os.Error
 }
 
 type NestedTemplate struct {
@@ -123,8 +123,7 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         path = append(path, name_id)
     }
 
-    var args []reflect.Value
-    args, err = execArgs(wr, vf, ctx)
+    args, err := execArgs(wr, vf, ctx)
     if err != nil {
         return
     }
@@ -140,7 +139,7 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
                 reflect.NewValue(ctx[ii]), name_id, args, vf.fun,
             )
             if stat == RUN_OK {
-                // Znalezlismy zmienna lub wystapil blad
+                // Znalezlismy zmienna
                 break
             }
             // Blad oznacza ze dana skladowa kontekstu nie pasuje do atrybutu,
@@ -188,7 +187,7 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
     for _, va := range tpl.elems {
         switch el := va.(type) {
         case *TxtElem:
-            _, err = io.WriteString(wr, el.txt)
+            _, err = wr.Write(el.txt)
             if err != nil {
                 return
             }
@@ -220,15 +219,17 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
             case []byte:
                 // Raw text
                 if el.filt && tpl.EscapeFunc != nil {
-                    err = tpl.EscapeFunc(wr, string(vtn))
+                    err = tpl.EscapeFunc(wr, vtn)
                 } else {
                     _, err = wr.Write(vtn)
                 }
             default:
-                // Zwykla zmienna
+                // Inna wartosc
                 if el.filt && tpl.EscapeFunc != nil {
                     // Wysylamy z wykorzystaniem EscapeFunc
-                    err = tpl.EscapeFunc(wr, fmt.Sprint(vtn))
+                    var buf bytes.Buffer
+                    fmt.Fprint(&buf, vtn)
+                    err = tpl.EscapeFunc(wr, buf.Bytes())
                 } else {
                     // Wysylamy
                     _, err = fmt.Fprint(wr, vtn)
@@ -283,20 +284,25 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
             // W tym momencie val moze zawierac: nil, tablice lub skalar
             switch vv := val.(type) {
             case reflect.ArrayOrSliceValue:
-                if vv.Len() != 0 {
+                vv_len := vv.Len()
+                if vv_len != 0 {
                     // Niepusta tablica.
                     for_tpl.elems = el.iter_block
                     // Tworzymy kontekst dla iteracyjnego bloku for
-                    local_ctx := map[string]interface{}{}
+                    var val interface{}
+                    iter := el.iter_inc
+                    local_ctx := map[string]interface{}{
+                        el.iter: &iter,
+                        el.val:  &val,
+                    }
                     for_ctx := append(ctx, local_ctx)
-                    for ii := 0; ii < vv.Len(); ii++ {
-                        ev := vv.Elem(ii)
+                    for vv_len += el.iter_inc; iter < vv_len; iter++ {
+                        ev := vv.Elem(iter - el.iter_inc)
                         if ev == nil {
-                            local_ctx[el.val] = nil
+                            val = nil
                         } else {
-                            local_ctx[el.val] = ev.Interface()
+                            val = ev.Interface()
                         }
-                        local_ctx[el.iter] = ii + el.iter_inc
                         err = for_tpl.Run(wr, for_ctx...)
                         if err != nil {
                             return
@@ -318,16 +324,20 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                     }
                     for_tpl.elems = el.iter_block
                     // Tworzymy kontekst dla iteracyjnego bloku for
-                    local_ctx := map[string]interface{}{}
+                    var key, val interface{}
+                    local_ctx := map[string]interface{}{
+                        el.iter: &key,
+                        el.val:  &val,
+                    }
                     for_ctx := append(ctx, local_ctx)
-                    for _, key := range vv.Keys() {
-                        ev := vv.Elem(key)
+                    for _, k := range vv.Keys() {
+                        ev := vv.Elem(k)
                         if ev == nil {
-                            local_ctx[el.val] = nil
+                            val = nil
                         } else {
-                            local_ctx[el.val] = ev.Interface()
+                            val = ev.Interface()
                         }
-                        local_ctx[el.iter] = key.Interface()
+                        key = k.Interface()
                         err = for_tpl.Run(wr, for_ctx...)
                         if err != nil {
                             return
@@ -373,9 +383,9 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
     return
 }
 
-func (tpl *Template) Parse(str string) (err os.Error) {
+func (tpl *Template) Parse(txt []byte) (err os.Error) {
     lnum := 1
-    tpl.elems, err = parse1(&str, &lnum, "")
+    tpl.elems, err = parse1(&txt, &lnum, make(map[string]string), "")
     if err != nil {
         return
     }
@@ -401,33 +411,40 @@ func New() *Template {
     return &tpl
 }
 
+var (
+    esc_amp  = []byte("&amp;")
+    esc_apos = []byte("&apos;")
+    esc_lt   = []byte("&lt;")
+    esc_gt   = []byte("&gt;")
+    esc_quot = []byte("&quot;")
+)
 
-func WriteEscapedHtml(wr io.Writer, txt string) (err os.Error) {
-    var esc string
+func WriteEscapedHtml(wr io.Writer, txt []byte) (err os.Error) {
+    var esc []byte
     last := 0
     for ii, bb := range txt {
         switch bb {
         case '&':
-            esc = "&amp;"
+            esc = esc_amp
         case '\'':
-            esc = "&apos;"
+            esc = esc_apos
         case '<':
-            esc = "&lt;"
+            esc = esc_lt
         case '>':
-            esc = "&gt;"
+            esc = esc_gt
         case '"':
-            esc = "&quot;"
+            esc = esc_quot
         default:
             continue
         }
-        if _, err = io.WriteString(wr, txt[last:ii]); err != nil {
+        if _, err = wr.Write(txt[last:ii]); err != nil {
             return
         }
-        if _, err = io.WriteString(wr, esc); err != nil {
+        if _, err = wr.Write(esc); err != nil {
             return
         }
         last = ii + 1
     }
-    _, err = io.WriteString(wr, txt[last:])
+    _, err = wr.Write(txt[last:])
     return
 }

@@ -29,7 +29,7 @@ func RenderBytes(txt string, strict bool, ctx ...interface{}) (
     tpl := New()
     tpl. Strict = strict
 
-    err := tpl.Parse(txt)
+    err := tpl.Parse([]byte(txt))
     if err != nil {
         return nil, err
     }
@@ -55,12 +55,12 @@ func (tpl *Template) ParseFile(filename string) (err os.Error) {
     if err != nil {
         return
     }
-    return tpl.Parse(string(data))
+    return tpl.Parse(data)
 }
 
 func Parse(txt string) (tpl *Template, err os.Error) {
     tpl = New()
-    err = tpl.Parse(txt)
+    err = tpl.Parse([]byte(txt))
     if err != nil {
         tpl = nil
     }

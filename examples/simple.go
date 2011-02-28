@@ -13,8 +13,7 @@ type Ctx struct {
 func main() {
     ctx := &Ctx{"Hello", "world"}
 
-    tpl := kasia.New()
-    err := tpl.Parse("$h $w!\n")
+    tpl, err := kasia.Parse("$h $w!\n")
     if err != nil {
         fmt.Println(err)
         return

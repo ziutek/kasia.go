@@ -8,9 +8,9 @@ import (
     "reflect"
 )
 
-func findChar(txt, chars string, lnum *int) int {
+func findChar(txt []byte, chars string, lnum *int) int {
     for ii, cc := range txt {
-        if strings.IndexRune(chars, cc) != -1 {
+        if strings.IndexRune(chars, int(cc)) != -1 {
             return ii
         }
         if cc == '\n' {
@@ -20,9 +20,9 @@ func findChar(txt, chars string, lnum *int) int {
     return -1
 }
 
-func findNotChar(txt, chars string, lnum *int) int {
+func findNotChar(txt []byte, chars string, lnum *int) int {
     for ii, cc := range txt {
-        if strings.IndexRune(chars, cc) == -1 {
+        if strings.IndexRune(chars, int(cc)) == -1 {
             return ii
         }
         if cc == '\n' {
@@ -32,7 +32,7 @@ func findNotChar(txt, chars string, lnum *int) int {
     return -1
 }
 
-func findCharEsc(txt, chars string, lnum *int) int {
+func findCharEsc(txt []byte, chars string, lnum *int) int {
     index := 0
     for {
         id := findChar(txt, chars, lnum)
@@ -67,7 +67,7 @@ const (
     not_letters  = seps + digits
 )
 
-func skip(frag *string, lnum *int, seps string) os.Error {
+func skip(frag *[]byte, lnum *int, seps string) os.Error {
     ii := findNotChar(*frag, seps, lnum)
     if ii == -1 {
         return ParseErr{*lnum, PARSE_UNEXP_EOF}
@@ -76,11 +76,11 @@ func skip(frag *string, lnum *int, seps string) os.Error {
     return nil
 }
 
-func skipWhite(frag *string, lnum *int) os.Error {
+func skipWhite(frag *[]byte, lnum *int) os.Error {
     return skip(frag, lnum, seps_white)
 }
 
-func skipNewline(frag *string, lnum *int) {
+func skipNewline(frag *[]byte, lnum *int) {
     nl := false
     for len(*frag) != 0 {
         switch (*frag)[0] {
@@ -98,9 +98,21 @@ func skipNewline(frag *string, lnum *int) {
     }
 }
 
+// Funkcja pozwala na uniknac przechowywanie w sparsowanym szabloni
+// powtarzajacych sie symboli. Jesli symbol pojawil sie juz wczenieniej w
+// trakcie parsowania to jest zwracany przez ta funckje.
+func getSymbol(sym string, stab map[string]string) string {
+    if s, ok := stab[sym]; ok {
+        sym = s
+    } else {
+        stab[sym] = sym
+    }
+    return sym
+}
+
 // Parsuje parametr znajdujacy sie na poczatku frag. Pomija biale znaki przed
 // parametrem i usuwa za nim (po wywolaniu frag[0] nie jest bialym znakiem).
-func parse1Param(txt *string, lnum *int) (
+func parse1Param(txt *[]byte, lnum *int, stab map[string]string) (
         par interface{}, err os.Error) {
     frag := *txt
 
@@ -112,14 +124,14 @@ func parse1Param(txt *string, lnum *int) (
 
     if frag[0] == '"' || frag[0] == '\'' || frag[0] == '`' {
         // Parametrem jest tekst.
-        txt_sep := frag[0:1]
+        txt_sep := string(frag[0:1])
         frag = frag[1:]
         if len(frag) == 0 {
             err = ParseErr{*lnum, PARSE_UNEXP_EOF}
             return
         }
         // Parsujemy tekst parametru. 
-        par, err = parse1(&frag, lnum, txt_sep)
+        par, err = parse1(&frag, lnum, stab, txt_sep)
         if err != nil {
             return
         }
@@ -132,10 +144,11 @@ func parse1Param(txt *string, lnum *int) (
             return
         }
         var iv int
-        iv, err = strconv.Atoi(frag[0:ii])
+        sn := string(frag[0:ii])
+        iv, err = strconv.Atoi(sn)
         if err != nil {
             var fv float64
-            fv, err = strconv.Atof64(frag[0:ii])
+            fv, err = strconv.Atof64(sn)
             if err != nil {
                 err = ParseErr{*lnum, PARSE_BAD_FLOINT}
                 return
@@ -146,7 +159,7 @@ func parse1Param(txt *string, lnum *int) (
         }
         frag = frag[ii:]
     } else {
-        par, err = parse1VarFun("", &frag, lnum, false)
+        par, err = parse1VarFun("", &frag, lnum, stab, false)
         if err != nil {
             return
         }
@@ -159,8 +172,8 @@ func parse1Param(txt *string, lnum *int) (
     return
 }
 
-func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
-        el *VarFunElem, err os.Error) {
+func parse1VarFun(symbol string, txt *[]byte, lnum *int, stab map[string]string,
+        filt bool) (el *VarFunElem, err os.Error) {
 
     el = &VarFunElem{}
     el.ln = *lnum
@@ -172,7 +185,7 @@ func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
         if frag[0] == '[' {
             // Dynamiczna nazwa w postaci indeksu
             frag = frag[1:]
-            el.name, err = parse1Param(&frag, lnum)
+            el.name, err = parse1Param(&frag, lnum, stab)
             if err != nil {
                 return
             }
@@ -195,14 +208,14 @@ func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
             if ii == -1 {
                 ii = len(frag)
             }
-            el.name = reflect.NewValue(frag[0:ii])
+            el.name = reflect.NewValue(getSymbol(string(frag[0:ii]), stab))
             frag = frag[ii:]
         } else {
             err = ParseErr{*lnum, PARSE_BAD_NAME}
             return
         }
     } else {
-        el.name = reflect.NewValue(symbol)
+        el.name = reflect.NewValue(getSymbol(symbol, stab))
     }
 
     // Sprawdzamy czy sa argumenty
@@ -222,7 +235,7 @@ func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
             }
 
             // Pobieramy parametr usuwajac otaczajace go biale znaki.
-            arg, err = parse1Param(&frag, lnum)
+            arg, err = parse1Param(&frag, lnum, stab)
             if err != nil {
                 return
             }
@@ -254,7 +267,7 @@ func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
     if el.next != nil {
         // Ustawiamy znacznik filtrowania we wszystkich elementach sciezki,
         // choc potrzebny bedzie zapewne tylko w pierwszym (moze w ostatnim?).
-        el.next, err = parse1VarFun("", &frag, lnum, filt)
+        el.next, err = parse1VarFun("", &frag, lnum, stab, filt)
         if err != nil {
             return
         }
@@ -263,7 +276,7 @@ func parse1VarFun(symbol string, txt *string, lnum *int, filt bool) (
     return
 }
 
-func parse1(txt *string, lnum *int, txt_sep string) (
+func parse1(txt *[]byte, lnum *int, stab map[string]string, txt_sep string) (
         elems []Element, err os.Error) {
 
     hot_chars := "$" + txt_sep
@@ -331,7 +344,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
             ii = len(frag)
         }
 
-        symbol := frag[0:ii]
+        symbol := string(frag[0:ii])
         frag = frag[ii:]
 
         // W tym momencie symbol zawiera nazwe symbolu,
@@ -341,7 +354,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
         case "if", "elif":
             // Parsujemy zmienna lub funkcje.
             var arg1, arg2 interface{}
-            arg1, err = parse1Param(&frag, lnum)
+            arg1, err = parse1Param(&frag, lnum, stab)
             if err != nil {
                 return
             }
@@ -353,7 +366,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
                     err = ParseErr{*lnum, PARSE_UNEXP_EOF}
                     return
                 }
-                switch frag[0:ii] {
+                switch string(frag[0:ii]) {
                 case "==":
                     cmp = if_eq
                     frag = frag[2:]
@@ -376,7 +389,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
                     err = ParseErr{*lnum, PARSE_IF_ERR}
                     return
                 }
-                arg2, err = parse1Param(&frag, lnum)
+                arg2, err = parse1Param(&frag, lnum, stab)
                 if err != nil {
                     return
                 }
@@ -408,7 +421,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
                 err = ParseErr{*lnum, PARSE_UNEXP_EOF}
                 return
             }
-            iter := frag[0:ii]
+            iter := getSymbol(string(frag[0:ii]), stab)
             if len(iter) == 0 {
                 err = ParseErr{*lnum, PARSE_FOR_ERR}
                 return
@@ -441,7 +454,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
                 err = ParseErr{*lnum, PARSE_UNEXP_EOF}
                 return
             }
-            val := frag[0:ii]
+            val := getSymbol(string(frag[0:ii]), stab)
 
             frag = frag[ii:]
             // Pomijamy biale znaki przed "in"
@@ -454,7 +467,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
                 err = ParseErr{*lnum, PARSE_UNEXP_EOF}
                 return
             }
-            if frag[0:ii] != "in" {
+            if string(frag[0:ii]) != "in" {
                 err = ParseErr{*lnum, PARSE_FOR_ERR}
                 return
             }
@@ -466,7 +479,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
             }
             // Parsujemy zmienna lub funkcje tablicowa.
             var vf *VarFunElem
-            vf, err = parse1VarFun("", &frag, lnum, false)
+            vf, err = parse1VarFun("", &frag, lnum, stab, false)
             if err != nil {
                 return
             }
@@ -514,7 +527,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
                 // Bezposrednie odwolanie do samego kontekstu, zmienna
                 // o dynamicznej lub liczbowej nazwie lub samowywolanie.
                 var vf *VarFunElem
-                vf, err = parse1VarFun("", &frag, lnum, filtered)
+                vf, err = parse1VarFun("", &frag, lnum, stab, filtered)
                 if err != nil {
                     return
                 }
@@ -549,7 +562,7 @@ func parse1(txt *string, lnum *int, txt_sep string) (
 
         default: // Zmienna lub funkcja
             var vf *VarFunElem
-            vf, err = parse1VarFun(symbol, &frag, lnum, filtered)
+            vf, err = parse1VarFun(symbol, &frag, lnum, stab, filtered)
             if err != nil {
                 return
             }

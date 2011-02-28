@@ -55,8 +55,7 @@ The simplest example is:
     func main() {
         ctx := &Ctx{"Hello", "world"}
 
-        tpl := kasia.New()
-        err := tpl.Parse("$h $w!\n")
+        tpl, err := kasia.Parse("$h $w!\n")
         if err != nil {
             fmt.Println(err)
             return
@@ -79,7 +78,6 @@ example usage of Kasia.go in simple Wiki.
 
 There are a few methods/functions for Go template compatibility:
 
-    func (*Template) Execute(wr io.Writer, data interface{}) os.Error
     func (*Template) ParseFile(filename string) os.Error
     func Parse(txt string) (*Template, os.Error)
     func MustParse(txt string) *Template
@@ -278,7 +276,7 @@ escaped by default. If you want unescaped text use ':' after the '$' sign:
 
 If you want to use a different escape function, define your own as:
 
-    func(io.Writer, string) os.Error
+    func(io.Writer, []byte) os.Error
 
 and assign it to Template.EscapeFunc before rendering. Variables used as
 parameters or indexes are always unescaped.
