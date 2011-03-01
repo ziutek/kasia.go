@@ -11,6 +11,7 @@ const (
     RUN_NOT_FOUND
     RUN_WRONG_ARG_NUM
     RUN_WRONG_ARG_TYP
+    RUN_NOT_RET
     RUN_INDEX_OOR
     RUN_UNK_TYPE
     RUN_NOT_FUNC
@@ -39,6 +40,7 @@ func (re RunErr) String() (txt string) {
         "variable not found",
         "wrong number of arguments",
         "wrong argument type",
+        "there isn't return value",
         "index out of range",
         "unknown type",
         "not a function",
@@ -81,9 +83,11 @@ func dereference(val *reflect.Value) {
 // argumenty do typu interface{}. Jesli to potrzebna, funkcja odpowiednio
 // dostosowuje args dla funkcji.
 func argsMatch(ft *reflect.FuncType, args *[]reflect.Value, method int) int {
+    if ft.NumOut() == 0 {
+        return RUN_NOT_RET
+    }
     // Liczba arguemntow akceptowanych przez funkcje/metode
     num_in := ft.NumIn() - method
-
     // Sprawdzamy zgodnosc liczby argumentow i obecnosc funkcji dotdotdot
     var head_args, tail_args []reflect.Value
     if ft.DotDotDot() {
@@ -157,24 +161,29 @@ func argsMatch(ft *reflect.FuncType, args *[]reflect.Value, method int) int {
 func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
         reflect.Value, int) {
 
+    //# 2.44
     if ctx == nil {
         return nil, RUN_NIL_CTX
     }
+    //# 2.44
 
     // Dereferencja nazwy
     dereference(&name)
+    //# 2.47
 
     // Dereferencja jesli kontekst jest interfejsem
     if vi, ok := ctx.(*reflect.InterfaceValue); ok {
         ctx = vi.Elem()
     }
+    //# 2.64
 
     // Jesli nazwa jest stringiem probujemy znalezc metode o tej nazwie
     if id, ok := name.(*reflect.StringValue); ok {
         tt := ctx.Type()
+        //nm := tt.NumMethod()
         for ii := 0; ii < tt.NumMethod(); ii++ {
             method := tt.Method(ii)
-            // Sprawdzamy zgodnosc nazwy metody i typu receiver'a
+            // Sprawdzamy zgodnosc nazwy metody oraz typu receiver'a
             if method.Name == id.Get() && tt == method.Type.In(0) {
                 stat := argsMatch(method.Type, &args, 1)
                 if stat != RUN_OK {
@@ -191,12 +200,14 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
             }
         }
     }
+    //# 2.92
 
     // Jesli name != nil operujemy na nazwanej zmiennej z kontekstu,
     // w przeciwnym razie operujemy na samym kontekscie jako zmiennej.
     if name != nil {
         // Pelna dereferencja kontekstu
         dereference(&ctx)
+        //# 2.96
         // Pobieramy wartosc
         switch vt := ctx.(type) {
         case *reflect.StructValue:
@@ -218,6 +229,27 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
                 return nil, RUN_NOT_FOUND
             }
 
+        case *reflect.MapValue:
+            kt := vt.Type().(*reflect.MapType).Key()
+            //# 3.72
+            if name.Type() != kt {
+                if it,ok := kt.(*reflect.InterfaceType);ok && it.NumMethod()==0{
+                    // Jesli mapa posiada klucz typu interface{} to
+                    // przeksztalcamy indeks na typ interface{}
+                    vi := name.Interface()
+                    name = reflect.NewValue(&vi).(*reflect.PtrValue).Elem()
+                } else {
+                    return nil, RUN_NOT_FOUND
+                }
+            }
+            //# 3.87
+            ctx = vt.Elem(name)
+            //# 7.58
+            if ctx == nil {
+                return nil, RUN_NOT_FOUND
+            }
+            //# 7.64
+
         case reflect.ArrayOrSliceValue:
             switch id := name.(type) {
             case *reflect.IntValue:
@@ -231,23 +263,6 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
                 return nil, RUN_NOT_FOUND
             }
 
-        case *reflect.MapValue:
-            kt := vt.Type().(*reflect.MapType).Key()
-            if name.Type() != kt {
-                if it,ok := kt.(*reflect.InterfaceType);ok && it.NumMethod()==0{
-                    // Jesli mapa posiada klucz typu interface{} to
-                    // przeksztalcamy indeks na typ interface{}
-                    vi := name.Interface()
-                    name = reflect.NewValue(&vi).(*reflect.PtrValue).Elem()
-                } else {
-                    return nil, RUN_NOT_FOUND
-                }
-            }
-            ctx = vt.Elem(name)
-            if ctx == nil {
-                return nil, RUN_NOT_FOUND
-            }
-
         case nil:
             return nil, RUN_NIL_CTX
 
@@ -255,25 +270,30 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
             return nil, RUN_UNK_TYPE
         }
     }
+    //# 7.10
 
     // Jesli mamy wywolanie funkcji to robimy pelna dereferencje.
     if fun {
         dereference(&ctx)
     }
+    //# 7.34
 
     // Sprawdzenie czy ctx odnosi sie do funkcji.
     if vt, ok := ctx.(*reflect.FuncValue); ok {
         ft := vt.Type().(*reflect.FuncType)
-        // Sprawdzamy zgodnosc liczby argumentow
-        stat := argsMatch(ft, &args, 0)
-        if stat != RUN_OK {
-            return nil, stat
+        if fun || ft.NumIn() == 0 {
+            // Sprawdzamy zgodnosc liczby argumentow
+            stat := argsMatch(ft, &args, 0)
+            if stat != RUN_OK {
+                return nil, stat
+            }
+            // Zwracamy pierwsza wrtosc zwrocaona przez funkcje.
+            ctx = vt.Call(args)[0]
         }
-        // Zwracamy pierwsza wrtosc zwrocaona przez funkcje.
-        ctx = vt.Call(args)[0]
     } else if fun {
         return nil, RUN_NOT_FUNC
     }
+    //# 7.46
 
     //fmt.Println("DEB getvar.ret:", reflect.Typeof(ctx.Interface()))
     return ctx, RUN_OK

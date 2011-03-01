@@ -76,6 +76,7 @@ func execArgs(wr io.Writer, vf *VarFunElem, ctx []interface{}) (
 func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         val reflect.Value, err os.Error) {
 
+    //# 2.48
     var (
         path []reflect.Value
         name_id reflect.Value
@@ -86,11 +87,6 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         // Jesli jest dynamiczna, dla bezpieczenstwa, do jej okreslenia
         // uzywamy trybu strict.
         switch pe := pv.name.(type) {
-        case nil:
-            // Brak nazwy wiec elementem sciezki jest czyste wywolanie funkcji
-            // lub sam kontekst.
-            name_id = nil
-
         case *reflect.StringValue, *reflect.IntValue, *reflect.FloatValue:
             // Elementem sciezki jest:
             //   *reflect.StringValue: nazwa tekstowa lub indeks tekstowy,
@@ -115,6 +111,11 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
                 return
             }
 
+        case nil:
+            // Brak nazwy wiec elementem sciezki jest czyste wywolanie funkcji
+            // lub sam kontekst.
+            name_id = nil
+
         default:
             panic(fmt.Sprintf(
                 "tmpl:exec, line %d: unknown type in var/fun path!",
@@ -122,22 +123,26 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         }
         path = append(path, name_id)
     }
+    //# 4.44
 
     args, err := execArgs(wr, vf, ctx)
     if err != nil {
         return
     }
+    //# 4.55
     stat := RUN_OK
     name_id = path[0]
     // name_id == nil tylko wtedy gdy na poczatku sciezki jest sam kontekst '$@'
     // lub czyste wywolanie funkcji '$(...)'
     if name_id != nil || vf.fun {
-        // Poszukujemy zmiennej lub funkcji pasujacej do poczatku sicezki
+        // Poszukujemy zmiennej lub funkcji pasujacej do poczatku sciezki
         for ii := len(ctx); ii > 0; {
             ii--
+            //# 4.55
             val, stat = getVarFun(
                 reflect.NewValue(ctx[ii]), name_id, args, vf.fun,
             )
+            //# 12.79
             if stat == RUN_OK {
                 // Znalezlismy zmienna
                 break
@@ -158,10 +163,11 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
             return nil, nil
         }
     } else {
-        // Poczatek sciezki wskazuje na sam wielowarstwowy kontekst.
-        // Traktujemy go jako normalna wartosc typu slice
+        // Poczatek sciezki wskazuje na sam stos kontekstow.
+        // Traktujemy go jak normalna wartosc typu slice
         val = reflect.NewValue(ContextItself(ctx))
     }
+    //# 12.78
 
     // Poczatek sciezki do zmiennej znaleziony - przechodzimy reszte.
     for _, name_id = range path[1:] {
@@ -178,6 +184,7 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
             return nil, nil
         }
     }
+    //# 12.75
     return
 }
 
@@ -193,13 +200,17 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
             }
 
         case *VarFunElem:
+            //# 2.67
             var val reflect.Value
+            //# 3.00
             val, err = execVarFun(wr, el, ctx, tpl.Strict)
             if err != nil {
                 return
             }
+            //# 13.46
             // Dereferencja zwroconej wartosci
             dereference(&val)
+            //# 15.33
             if val == nil {
                 break
             }
@@ -235,6 +246,7 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                     _, err = fmt.Fprint(wr, vtn)
                 }
             }
+            //# 20.17
 
         case *IfElem:
             var v1, v2 reflect.Value
@@ -290,14 +302,19 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                     local_ctx := make(map[string]interface{})
                     for_ctx := append(ctx, local_ctx)
                     for ii := 0; ii < vv_len; ii++ {
+                        //# 1.69
                         ev := vv.Elem(ii)
+                        //# 3.14
                         if ev == nil {
                             local_ctx[el.val] = nil
                         } else {
                             local_ctx[el.val] = ev.Interface()
                         }
+                        //# 4.77
                         local_ctx[el.iter] = ii + el.iter_inc
+                        //# 6.81
                         err = for_tpl.Run(wr, for_ctx...)
+                        //# 25.54
                         if err != nil {
                             return
                         }

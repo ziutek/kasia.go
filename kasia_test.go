@@ -256,3 +256,20 @@ func TestChannel(t *testing.T) {
     ctx := map[string]interface{}{"xrange": xrange}
     check(t, tpl_txt, expect, true, ctx)
 }
+
+type Tmf struct {
+    m int
+}
+func (t *Tmf) mulf(i int) func(int)int {
+    return func(c int)int { return t.m * i * c }
+}
+func (t *Tmf) mul(i int) func()int {
+    return func()int { return t.m * i }
+}
+
+func TestMethodFunc(t *testing.T) {
+    ctx := &Tmf{2}
+    tpl_txt := "$mulf(3)(5) $mul(3)"
+    expect := "30 6"
+    check(t, tpl_txt, expect, true, ctx)
+}
