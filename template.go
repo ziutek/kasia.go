@@ -287,20 +287,16 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                 if vv_len != 0 {
                     for_tpl.elems = el.iter_block
                     // Tworzymy kontekst dla iteracyjnego bloku for
-                    var val interface{}
-                    iter := el.iter_inc
-                    local_ctx := map[string]interface{}{
-                        el.iter: &iter,
-                        el.val:  &val,
-                    }
+                    local_ctx := make(map[string]interface{})
                     for_ctx := append(ctx, local_ctx)
-                    for vv_len += el.iter_inc; iter < vv_len; iter++ {
-                        ev := vv.Elem(iter - el.iter_inc)
+                    for ii := 0; ii < vv_len; ii++ {
+                        ev := vv.Elem(ii)
                         if ev == nil {
-                            val = nil
+                            local_ctx[el.val] = nil
                         } else {
-                            val = ev.Interface()
+                            local_ctx[el.val] = ev.Interface()
                         }
+                        local_ctx[el.iter] = ii + el.iter_inc
                         err = for_tpl.Run(wr, for_ctx...)
                         if err != nil {
                             return
@@ -321,20 +317,16 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                     }
                     for_tpl.elems = el.iter_block
                     // Tworzymy kontekst dla iteracyjnego bloku for
-                    var key, val interface{}
-                    local_ctx := map[string]interface{}{
-                        el.iter: &key,
-                        el.val:  &val,
-                    }
+                    local_ctx := make(map[string]interface{})
                     for_ctx := append(ctx, local_ctx)
-                    for _, k := range vv.Keys() {
-                        ev := vv.Elem(k)
+                    for _, key := range vv.Keys() {
+                        ev := vv.Elem(key)
                         if ev == nil {
-                            val = nil
+                            local_ctx[el.val] = nil
                         } else {
-                            val = ev.Interface()
+                            local_ctx[el.val] = ev.Interface()
                         }
-                        key = k.Interface()
+                        local_ctx[el.iter] = key.Interface()
                         err = for_tpl.Run(wr, for_ctx...)
                         if err != nil {
                             return
@@ -351,30 +343,27 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
              case *reflect.ChanValue:
                 for_tpl.elems = el.iter_block
                 // Tworzymy kontekst dla iteracyjnego bloku for
-                var val interface{}
-                iter := el.iter_inc
-                local_ctx := map[string]interface{}{
-                    el.iter: &iter,
-                    el.val:  &val,
-                }
+                local_ctx := make(map[string]interface{})
                 for_ctx := append(ctx, local_ctx)
+                ii := el.iter_inc
                 for {
                     ev := vv.Recv()
                     if vv.Closed() {
                         break
                     }
                     if ev == nil {
-                        val = nil
+                        local_ctx[el.val] = nil
                     } else {
-                        val = ev.Interface()
+                        local_ctx[el.val] = ev.Interface()
                     }
+                    local_ctx[el.iter] = ii
                     err = for_tpl.Run(wr, for_ctx...)
                     if err != nil {
                         return
                     }
-                    iter++
+                    ii++
                 }
-                if iter == el.iter_inc {
+                if ii == el.iter_inc {
                     // Nic nie odebralismy z kanalu
                     for_tpl.elems = el.else_block
                     err = for_tpl.Run(wr, ctx...)

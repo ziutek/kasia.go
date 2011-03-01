@@ -34,7 +34,7 @@ func main() {
     tpl.Strict = true
     var devnull DevNull
     start := time.Nanoseconds()
-    n := 100
+    n := 200
     for ii := 0; ii < n; ii++ {
         err := tpl.Run(&devnull, bctx)
         if err != nil {
@@ -42,5 +42,5 @@ func main() {
         }
     }
     stop := time.Nanoseconds()
-    fmt.Printf("%d ns/op\n", (stop - start) / int64(n))
+    fmt.Printf("%.1f us/op\n", float64(stop - start) / float64(n*1e6))
 }
