@@ -281,12 +281,10 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
             for_tpl := *tpl
             // Dereferencja argumentu
             dereference(&val)
-            // W tym momencie val moze zawierac: nil, tablice lub skalar
             switch vv := val.(type) {
             case reflect.ArrayOrSliceValue:
                 vv_len := vv.Len()
                 if vv_len != 0 {
-                    // Niepusta tablica.
                     for_tpl.elems = el.iter_block
                     // Tworzymy kontekst dla iteracyjnego bloku for
                     var val interface{}
@@ -318,7 +316,6 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                 }
             case *reflect.MapValue:
                 if vv.Len() != 0 {
-                    // Niepusty slownik
                     if el.iter_inc != 0 {
                         return RunErr{el.ln, RUN_INC_MAP_KEY, nil}
                     }
@@ -351,8 +348,41 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                         return
                     }
                 }
-            case nil:
-                // nil
+             case *reflect.ChanValue:
+                for_tpl.elems = el.iter_block
+                // Tworzymy kontekst dla iteracyjnego bloku for
+                var val interface{}
+                iter := el.iter_inc
+                local_ctx := map[string]interface{}{
+                    el.iter: &iter,
+                    el.val:  &val,
+                }
+                for_ctx := append(ctx, local_ctx)
+                for {
+                    ev := vv.Recv()
+                    if vv.Closed() {
+                        break
+                    }
+                    if ev == nil {
+                        val = nil
+                    } else {
+                        val = ev.Interface()
+                    }
+                    err = for_tpl.Run(wr, for_ctx...)
+                    if err != nil {
+                        return
+                    }
+                    iter++
+                }
+                if iter == el.iter_inc {
+                    // Nic nie odebralismy z kanalu
+                    for_tpl.elems = el.else_block
+                    err = for_tpl.Run(wr, ctx...)
+                    if err != nil {
+                        return
+                    }
+                }
+           case nil:
                 for_tpl.elems = el.else_block
                 err = for_tpl.Run(wr, ctx...)
                 if err != nil {

@@ -238,3 +238,21 @@ func TestCtxStackUnstr(t *testing.T) {
 
     check(t, tpl_txt, expect, true, 2, "Ala", 3.14159)
 }
+
+func xrange(start, stop int) <-chan int {
+    c := make(chan int)
+    go func() {
+        for i := start; i < stop; i++ {
+            c <- i
+        }
+        close(c)
+    }()
+    return c
+}
+
+func TestChannel(t *testing.T) {
+    tpl_txt := "$for i+,v in xrange(4,8): $i,$v $end"
+    expect := " 1,4  2,5  3,6  4,7 "
+    ctx := map[string]interface{}{"xrange": xrange}
+    check(t, tpl_txt, expect, true, ctx)
+}
