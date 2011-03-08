@@ -11,20 +11,20 @@ import (
 const (
 bench_kt = `
 $for i, v in Arr:
-    $v.A $v.B
+    $i: $v.A, $v.B
 $end
 `
 bench_tpl = `
 {.repeated section Arr}
     {.section @}
-        {A} {B}
+        {I}: {A} {B}
     {.end}
 {.end}
 `
 )
 
 var bctx = struct {
-    Arr [1000]map[string]int
+    Arr [1000]map[string]interface{}
 }{}
 
 type DevNull struct{}
@@ -61,8 +61,12 @@ func tbench(n int) int64 {
 func main() {
     // Szykujemy dane
     for ii := 0; ii < len(bctx.Arr); ii++ {
-        bctx.Arr[ii] = map[string]int{"A": ii / 2, "B": ii * 2}
+        bctx.Arr[ii] = map[string]interface{}{
+            "I": ii, "A": ii * 2,
+            "B": `aąbcćdeęfghijklłmnńoóprsśtuvwxżż
+                  AĄBCĆDEĘFGHIJKLŁMNŃOÓPRSŚTUVWXYŻŹ`,
+        }
     }
-    n := 200
-    fmt.Printf("Kasia: %d, Go template: %d [r/s]\n", kbench(n), tbench(n))
+    n := 100
+    fmt.Printf("Kasia: %d, template: %d [r/s]\n", kbench(n), tbench(n))
 }

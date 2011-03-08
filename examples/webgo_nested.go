@@ -38,8 +38,8 @@ func hello(web_ctx *web.Context, val string) {
 func main() {
     // Main template
     tpl = kasia.New()
-    err := tpl.Parse(
-    "<html><body>Request #$cnt: $txt<br>\n$subtpl.Nested(subctx)</body></html>")
+    err := tpl.Parse([]byte("<html><body>Request #$cnt: $txt<br>\n" +
+                            "$subtpl.Nested(subctx)</body></html>\n"))
     if err != nil {
         fmt.Println("Main template", err)
         return
@@ -47,7 +47,7 @@ func main() {
 
     // Nested template
     data.subtpl = kasia.New()
-    err = data.subtpl.Parse("$for i+, v in vals: $i: $v<br>\n$end")
+    err = data.subtpl.Parse([]byte("$for i+, v in vals: $i: $v<br>\n$end"))
     if err != nil {
         fmt.Println("Nested template", err)
         return

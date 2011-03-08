@@ -48,7 +48,7 @@ const tpl_txt = `
 func main() {
     // Main template
     tpl = kasia.New()
-    err := tpl.Parse(tpl_txt)
+    err := tpl.Parse([]byte(tpl_txt))
     if err != nil {
         fmt.Println("Main template", err)
         return
