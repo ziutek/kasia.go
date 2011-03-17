@@ -364,8 +364,8 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                 for_ctx := append(ctx, local_ctx)
                 ii := el.iter_inc
                 for {
-                    ev := vv.Recv()
-                    if vv.Closed() {
+                    ev, ok := vv.Recv()
+                    if !ok {
                         break
                     }
                     if ev == nil {
