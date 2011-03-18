@@ -83,6 +83,7 @@ There are a few methods/functions for Go template compatibility:
     func MustParse(txt string) *Template
     func ParseFile(filename string) (*Template, os.Error)
     func MustParseFile(filename string) (*Template)
+    func (*Template) Execute(wr io.Writer, data interface{}) os.Error
 
 one method and one function for mustache.go compatibility (they panics when
 error occurs):
