@@ -29,6 +29,14 @@ directory. You can use `goinstall -u -a` for update all installed packages.
     $ git clone git://github.com/ziutek/kasia.go
     $ cd kasia.go && make install
 
+### Version for Go weekly releases
+
+    If master branch can't be compiled with Go weekle release, try clone
+    Kasia.go weekly branch:
+
+    $ git clone -b weekly git://github.com/ziutek/kasia.go
+    $ cd kasia.go && make install
+
 ## Using "Kasia.go"
 
 Kasia's native interface contains one function and three methods:
