@@ -31,8 +31,8 @@ directory. You can use `goinstall -u -a` for update all installed packages.
 
 ### Version for Go weekly releases
 
-    If master branch can't be compiled with Go weekle release, try clone
-    Kasia.go weekly branch:
+If master branch can't be compiled with Go weekle release, try clone
+Kasia.go weekly branch:
 
     $ git clone -b weekly git://github.com/ziutek/kasia.go
     $ cd kasia.go && make install
