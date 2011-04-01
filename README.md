@@ -31,7 +31,7 @@ directory. You can use `goinstall -u -a` for update all installed packages.
 
 ### Version for Go weekly releases
 
-If master branch can't be compiled with Go weekle release, try clone
+If master branch can't be compiled with Go weekly release, try clone
 Kasia.go weekly branch:
 
     $ git clone -b weekly git://github.com/ziutek/kasia.go
@@ -122,7 +122,7 @@ Example:
     tpl.Strict = true
 
     // Render to stdout, template.go way
-    err = tpl.Execute(data, os.Stdout)
+    err = tpl.Execute(os.Stdout, data)
 
     // One more time, mustache.go way
     err = fmt.Println(tpl.Render(data))
@@ -334,7 +334,7 @@ You can use simple comparison in if/elif statement:
 
 If the compared values have different types you should only use the '!=' and '=='
 operators. If the types match, Go comparison rules are applied. This form of
-*if* dereferenced interfaces and pointers before comparison.
+*if* dereference interfaces and pointers before comparison.
 
 You can use braces for all statements (useful for `$end` statement):
 
@@ -388,7 +388,7 @@ All the text between $# and #$ is ignored: not interpreted and not printed.
 
 ## Subtemplates (nested/embedded templates)
 
-If you want modularize your templates, you can do like this example:
+If you want modularize your templates, you can do like in folowing example:
 
     type Ctx struct {
         a int
@@ -415,13 +415,13 @@ Subtemplate tpl1:
 
     This template uses main context: $a, $b
 
-    You can lead to a loop if uncoment this: $# $tpl1 #$
+    You can lead to a loop if you uncoment this: $# $tpl1 #$
 
 Subtemplate tpl2:
 
     This template operates on context passed to it via Nested method: $s, $t
 
-As you can see in the example above, you can use subtemplates in two ways:
+As you can see, you can use subtemplates in two ways:
 
 1. Render subtemplate with main context by typing `$tpl1`.
 2. Render subtemplate with custom context: `$tpl2.Nested(custom_context)`.
@@ -444,6 +444,9 @@ the second part may be local data:
 
 You can pass them together to the *Run* method:
 
+    // Global data
+    var data = Ctx{//...} 
+
     func hello(web_ctx *web.Context, val string) {
         // Local data
         var ld *LocalCtx
@@ -452,10 +455,10 @@ You can pass them together to the *Run* method:
             ld = &LocalCtx{val, len(val)}
         }
 
-        // Rendering data
+        // Rendering the data
         err := tpl.Run(web_ctx, data, ld)
         if err != nil {
-            fmt.Fprint(web_ctx, "%", err, "%")
+            fmt.Fprintln(web_ctx, "Error:", err)
         }
     }
 
@@ -468,7 +471,7 @@ will be rendered, not the *b* field in *data*.
 
 You could create a context stack using the values without internal structure:
 
-    tpl.Run(2, "Ala", 3.14159)
+    tpl.Run(os.Stdout, 2, "Ala", 3.14159)
 
 To render such values you should use *@* symbol:
 
