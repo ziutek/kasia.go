@@ -15,26 +15,29 @@ const (
 
 func parse2Param(par *interface{}, ln int) (err os.Error) {
     switch pv := (*par).(type) {
-    case *reflect.IntValue, *reflect.FloatValue:
-        // Argumentem jest liczba - nic nie robimy.
+    case reflect.Value:
+        vk := pv.Kind()
+        if vk == reflect.Int || vk == reflect.Int8 || vk == reflect.Int16 ||
+                vk == reflect.Int32 || vk == reflect.Int64 ||
+                vk == reflect.Float32 || vk == reflect.Float64 {
+            // Argumentem jest liczba - nic nie robimy.
+        } else {
+            panic(fmt.Sprintf("tmpl:parse2, line %d: Unknown parameter type: " +
+                "%s!", ln, vk))
+        }
 
     case []Element:
         // Argumentem jest wstepnie sparsowany tekst
         *par, err = parse2(&pv, MAIN_BLK)
-        if err != nil {
-            return
-        }
 
     case *VarFunElem:
         // Argumentem jest zmienna
         err = parse2VarFun(pv)
-        if err != nil {
-            return
-        }
         *par = pv
 
     default:
-        panic(fmt.Sprintf("tmpl:parse2, line %d: Unknown parameter type!", ln))
+        panic(fmt.Sprintf("tmpl:parse2, line %d: Unknown parameter type: %T!",
+            ln, pv))
     }
     return
 }
@@ -44,8 +47,19 @@ func parse2VarFun(vf *VarFunElem) (err os.Error) {
     // Parsujemy sciezke do zmiennej/funkcji
     for vf != nil {
         switch pe := vf.name.(type) {
-        case *reflect.StringValue, *reflect.IntValue, *reflect.FloatValue, nil:
-            // Nazwa, indeks liczbowy lub samowywolanie - nic nie robimy.
+        case nil:
+            // Samowywolanie - nic nie robimy.
+        case reflect.Value:
+            vk := pe.Kind()
+            if vk == reflect.String || vk == reflect.Int ||
+                    vk == reflect.Int8 || vk == reflect.Int16 ||
+                    vk == reflect.Int32 || vk == reflect.Int64 ||
+                    vk == reflect.Float32 || vk == reflect.Float64 {
+                // Nazwa, indeks liczbowy - nic nie robimy.
+            } else {
+                panic(fmt.Sprintf("tmpl:parse2, line %d: Unknown type (%s) " +
+                    "of index in var/fun path! ", vf.ln, vk))
+            }
 
         case []Element:
             // Indeks tekstowy po sparsowaniu.
@@ -64,7 +78,8 @@ func parse2VarFun(vf *VarFunElem) (err os.Error) {
 
         default:
             panic(fmt.Sprintf(
-                "tmpl:parse2, line %d: Unknown type in var/fun path!", vf.ln))
+                "tmpl:parse2, line %d: Unknown type (%T) in var/fun path!",
+                vf.ln, pe))
         }
 
         // Parsujemy argumenty funkcji

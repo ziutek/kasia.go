@@ -66,12 +66,12 @@ func (re RunErr) String() (txt string) {
 // Pelna dereferencja wskaznikow i interfejsow
 func dereference(val *reflect.Value) {
     for {
-        switch vt := (*val).(type) {
-        case *reflect.PtrValue:
-            *val = vt.Elem()
+        switch val.Kind() {
+        case reflect.Ptr:
+            *val = val.Elem()
 
-        case *reflect.InterfaceValue:
-            *val = vt.Elem()
+        case reflect.Interface:
+            *val = val.Elem()
 
         default:
             return
@@ -80,9 +80,9 @@ func dereference(val *reflect.Value) {
 }
 
 // Funkcja sprawdza zgodnosc typow argumentow. Jesli to konieczne konwertuje
-// argumenty do typu interface{}. Jesli to potrzebna, funkcja odpowiednio
+// argumenty do typu interface{}. Jesli to potrzebne, funkcja odpowiednio
 // dostosowuje args dla funkcji.
-func argsMatch(ft *reflect.FuncType, args *[]reflect.Value, method int) int {
+func argsMatch(ft reflect.Type, args *[]reflect.Value, method int) int {
     if ft.NumOut() == 0 {
         return RUN_NOT_RET
     }
@@ -90,7 +90,7 @@ func argsMatch(ft *reflect.FuncType, args *[]reflect.Value, method int) int {
     num_in := ft.NumIn() - method
     // Sprawdzamy zgodnosc liczby argumentow i obecnosc funkcji dotdotdot
     var head_args, tail_args []reflect.Value
-    if ft.DotDotDot() {
+    if ft.IsVariadic() {
         num_in--
         if len(*args) < num_in {
             return RUN_WRONG_ARG_NUM
@@ -110,25 +110,25 @@ func argsMatch(ft *reflect.FuncType, args *[]reflect.Value, method int) int {
         //fmt.Printf("DEB: ctx: %s, fun: %s\n", av.Type(), at)
         if at != av.Type() {
             // Sprawdzamy czy arguentem funkcji jest typ interface{}
-            if it, ok := at.(*reflect.InterfaceType); ok && it.NumMethod()==0 {
+            if at.Kind() == reflect.Interface && at.NumMethod() == 0 {
                 // Zmieniamy typ argumentu przekazywanego do funkcji
                 vi := av.Interface()
-                head_args[kk] = reflect.NewValue(&vi).(*reflect.PtrValue).Elem()
+                // TODO: Sprawdzic czy da sie bez posrednictwa wskaznika
+                head_args[kk] = reflect.NewValue(&vi).Elem()
             } else {
                 return RUN_WRONG_ARG_TYP
             }
         }
     }
 
-    if !ft.DotDotDot() {
+    if !ft.IsVariadic() {
         return RUN_OK
     }
 
     // Okreslamy typ argumentów zawartych w dotdotdot
-    st := ft.In(ft.NumIn() - 1).(*reflect.SliceType)
+    st := ft.In(ft.NumIn() - 1) // slice
     at := st.Elem()
-    it, ok := at.(*reflect.InterfaceType)
-    at_is_interface := (ok && it.NumMethod() == 0)
+    at_is_interface := (at.Kind() == reflect.Interface && at.NumMethod() == 0)
     // Przygotowujemy miejsce na argumenty
     ddd := reflect.MakeSlice(st, len(tail_args), len(tail_args))
     for kk, av := range tail_args {
@@ -137,13 +137,14 @@ func argsMatch(ft *reflect.FuncType, args *[]reflect.Value, method int) int {
             if at_is_interface {
                 // Zmieniamy typ argumentu przekazywanego do funkcji
                 vi := av.Interface()
-                tail_args[kk] = reflect.NewValue(&vi).(*reflect.PtrValue).Elem()
+                // TODO: Sprawdzic czy da sie bez posrednictwa wskaznika
+                tail_args[kk] = reflect.NewValue(&vi).Elem()
             } else {
                 return RUN_WRONG_ARG_TYP
             }
         }
         // Umieszczamy argument w ddd
-        ddd.Elem(kk).SetValue(av)
+        ddd.Index(kk).Set(av)
     }
 
     // Zwracamy zmodyfikowana tablice argumentow
@@ -159,40 +160,37 @@ func argsMatch(ft *reflect.FuncType, args *[]reflect.Value, method int) int {
 // ani wskaznikiem, ani interfejsem lub zwrocic wskaznik lub interface do takiej
 // zmiennej. Uwaga! Funkcja moze modyfikowac wartosci args!
 func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
-        reflect.Value, int) {
+        ret reflect.Value, stat int) {
 
-    //# 2.44
-    if ctx == nil {
-        return nil, RUN_NIL_CTX
+    if !ctx.IsValid() {
+        stat = RUN_NIL_CTX
+        return
     }
-    //# 2.44
 
     // Dereferencja nazwy
     dereference(&name)
-    //# 2.47
 
     // Dereferencja jesli kontekst jest interfejsem
-    if vi, ok := ctx.(*reflect.InterfaceValue); ok {
-        ctx = vi.Elem()
+    if ctx.Kind() == reflect.Interface {
+        ctx = ctx.Elem()
     }
-    //# 2.64
 
     // Jesli nazwa jest stringiem probujemy znalezc metode o tej nazwie
-    if id, ok := name.(*reflect.StringValue); ok {
+    if name.Kind() == reflect.String {
         tt := ctx.Type()
         //nm := tt.NumMethod()
         for ii := 0; ii < tt.NumMethod(); ii++ {
             method := tt.Method(ii)
             // Sprawdzamy zgodnosc nazwy metody oraz typu receiver'a
-            if method.Name == id.Get() && tt == method.Type.In(0) {
-                stat := argsMatch(method.Type, &args, 1)
+            if method.Name == name.String() && tt == method.Type.In(0) {
+                stat = argsMatch(method.Type, &args, 1)
                 if stat != RUN_OK {
-                    return nil, stat
+                    return
                 }
                 // Zwracamy pierwsza wartosc zwrocona przez metode
                 ctx = ctx.Method(ii).Call(args)[0]
                 // Nie pozwalamy na dalsza analize nazwy
-                name = nil
+                name = reflect.Value{}
                 // Nie pozwalamy na traktowanie zwroconej zmiennej jak funkcji
                 args = nil
                 fun = false
@@ -200,100 +198,102 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
             }
         }
     }
-    //# 2.92
 
-    // Jesli name != nil operujemy na nazwanej zmiennej z kontekstu,
+    // Jesli name zawiera wartosc operujemy na nazwanej zmiennej z kontekstu,
     // w przeciwnym razie operujemy na samym kontekscie jako zmiennej.
-    if name != nil {
+    if name.IsValid() {
         // Pelna dereferencja kontekstu
         dereference(&ctx)
-        //# 2.96
         // Pobieramy wartosc
-        switch vt := ctx.(type) {
-        case *reflect.StructValue:
-            switch id := name.(type) {
-            case *reflect.StringValue:
+        switch ctx.Kind() {
+        case reflect.Struct:
+            switch name.Kind() {
+            case reflect.String:
                 // Zwracamy pole struktury o podanej nazwie
-                ctx = vt.FieldByName(id.Get())
-                if ctx == nil {
-                    return nil, RUN_NOT_FOUND
+                ctx = ctx.FieldByName(name.String())
+                if !ctx.IsValid() {
+                    stat = RUN_NOT_FOUND
+                    return
                 }
-            case *reflect.IntValue:
+            case reflect.Int:
                 // Zwracamy pole sruktury o podanym indeksie
-                fi := int(id.Get())
-                if fi < 0 || fi >= vt.NumField() {
-                    return nil, RUN_INDEX_OOR
+                fi := int(name.Int())
+                if fi < 0 || fi >= ctx.NumField() {
+                    stat = RUN_INDEX_OOR
+                    return
                 }
-                ctx = vt.Field(fi)
+                ctx = ctx.Field(fi)
             default:
-                return nil, RUN_NOT_FOUND
+                stat = RUN_NOT_FOUND
+                return
             }
 
-        case *reflect.MapValue:
-            kt := vt.Type().(*reflect.MapType).Key()
-            //# 3.72
+        case reflect.Map:
+            kt := ctx.Type().Key()
             if name.Type() != kt {
-                if it,ok := kt.(*reflect.InterfaceType);ok && it.NumMethod()==0{
+                if kt.Kind() == reflect.Interface && kt.NumMethod() == 0 {
                     // Jesli mapa posiada klucz typu interface{} to
                     // przeksztalcamy indeks na typ interface{}
                     vi := name.Interface()
-                    name = reflect.NewValue(&vi).(*reflect.PtrValue).Elem()
+                    // TODO: Sprawdzic czy da sie bez posrednictwa wskaznika
+                    name = reflect.NewValue(&vi).Elem()
                 } else {
-                    return nil, RUN_NOT_FOUND
+                    stat = RUN_NOT_FOUND
+                    return
                 }
             }
-            //# 3.87
-            ctx = vt.Elem(name)
-            //# 7.58
-            if ctx == nil {
-                return nil, RUN_NOT_FOUND
+            ctx = ctx.MapIndex(name)
+            if !ctx.IsValid() {
+                stat = RUN_NOT_FOUND
+                return
             }
-            //# 7.64
 
-        case reflect.ArrayOrSliceValue:
-            switch id := name.(type) {
-            case *reflect.IntValue:
+        case reflect.Array, reflect.Slice:
+            switch name.Kind() {
+            case reflect.Int:
                 // Zwracamy element tablicy o podanym indeksie
-                ei := int(id.Get())
-                if ei < 0 || ei >= vt.Len() {
-                    return nil, RUN_INDEX_OOR
+                ei := int(name.Int())
+                if ei < 0 || ei >= ctx.Len() {
+                    stat = RUN_INDEX_OOR
+                    return
                 }
-                ctx = vt.Elem(ei)
+                ctx = ctx.Index(ei)
             default:
-                return nil, RUN_NOT_FOUND
+                stat = RUN_NOT_FOUND
+                return
             }
 
-        case nil:
-            return nil, RUN_NIL_CTX
+        case reflect.Invalid:
+            stat = RUN_NIL_CTX
+            return
 
         default:
-            return nil, RUN_UNK_TYPE
+            stat = RUN_UNK_TYPE
+            return
         }
     }
-    //# 7.10
 
     // Jesli mamy wywolanie funkcji to robimy pelna dereferencje.
     if fun {
         dereference(&ctx)
     }
-    //# 7.34
 
     // Sprawdzenie czy ctx odnosi sie do funkcji.
-    if vt, ok := ctx.(*reflect.FuncValue); ok {
-        ft := vt.Type().(*reflect.FuncType)
+    if ctx.Kind() == reflect.Func {
+        ft := ctx.Type()
         if fun || ft.NumIn() == 0 {
             // Sprawdzamy zgodnosc liczby argumentow
-            stat := argsMatch(ft, &args, 0)
+            stat = argsMatch(ft, &args, 0)
             if stat != RUN_OK {
-                return nil, stat
+                return
             }
             // Zwracamy pierwsza wrtosc zwrocaona przez funkcje.
-            ctx = vt.Call(args)[0]
+            ctx = ctx.Call(args)[0]
         }
     } else if fun {
-        return nil, RUN_NOT_FUNC
+        stat = RUN_NOT_FUNC
+        return
     }
-    //# 7.46
 
     //fmt.Println("DEB getvar.ret:", reflect.Typeof(ctx.Interface()))
     return ctx, RUN_OK
@@ -301,33 +301,35 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
 
 // Funkcja zwraca wartosc logiczna argumentu
 func getBool(val reflect.Value) bool {
-    switch av := val.(type) {
-    case nil:
+    switch val.Kind() {
+    case reflect.Invalid:
         return false
-    case reflect.ArrayOrSliceValue:
-        return av.Len() != 0
-    case *reflect.BoolValue:
-        return av.Get()
-    case *reflect.ChanValue:
-        return !av.IsNil()
-    case *reflect.ComplexValue:
-        return av.Get() != complex(0, 0)
-    case *reflect.FloatValue:
-        return av.Get() != 0.0
-    case *reflect.FuncValue:
-        return !av.IsNil()
-    case *reflect.IntValue:
-        return av.Get() != 0
-    case *reflect.InterfaceValue:
-        return !av.IsNil()
-    case *reflect.MapValue:
-        return av.Len() != 0
-    case *reflect.PtrValue:
-        return !av.IsNil()
-    case *reflect.StringValue:
-        return len(av.Get()) != 0
-    case *reflect.UintValue:
-        return av.Get() != 0
+    case reflect.Array, reflect.Slice:
+        return val.Len() != 0
+    case reflect.Bool:
+        return val.Bool()
+    case reflect.Chan:
+        return !val.IsNil()
+    case reflect.Complex64, reflect.Complex128:
+        return val.Complex() != complex(0, 0)
+    case reflect.Float32, reflect.Float64:
+        return val.Float() != 0.0
+    case reflect.Func:
+        return !val.IsNil()
+    case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
+            reflect.Int64:
+        return val.Int() != 0
+    case reflect.Interface:
+        return !val.IsNil()
+    case reflect.Map:
+        return val.Len() != 0
+    case reflect.Ptr:
+        return !val.IsNil()
+    case reflect.String:
+        return len(val.String()) != 0
+    case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32,
+            reflect.Uint64:
+        return val.Uint() != 0
     }
     return true
 }
@@ -336,7 +338,7 @@ func getBool(val reflect.Value) bool {
 func getCmp(arg1, arg2 reflect.Value, cmp int) (tf bool, stat int) {
     dereference(&arg1)
     dereference(&arg2)
-    if arg1 == nil && arg2 == nil {
+    if !arg1.IsValid() && !arg2.IsValid() {
         switch cmp {
         case if_eq, if_ge, if_le:
             tf = true
@@ -346,7 +348,7 @@ func getCmp(arg1, arg2 reflect.Value, cmp int) (tf bool, stat int) {
     } else {
         // Sprawdzamy czy typy pasuja do siebie.
         typdif := false
-        if arg1 == nil || arg2 == nil {
+        if !arg1.IsValid() || !arg2.IsValid() {
             typdif = true
         } else if arg1.Type() != arg2.Type() {
             typdif = true
@@ -362,13 +364,13 @@ func getCmp(arg1, arg2 reflect.Value, cmp int) (tf bool, stat int) {
             }
         } else {
             unk_oper := "tmpl:getCmp: Unknown comparasion operator!"
-            switch av1 := arg1.(type) {
-            case reflect.ArrayOrSliceValue:
+            switch arg1.Kind() {
+            case reflect.Array, reflect.Slice:
                 stat = CMP_ARRSLIC
 
-            case *reflect.BoolValue:
-                a1 := av1.Get()
-                a2 := arg2.(*reflect.BoolValue).Get()
+            case reflect.Bool:
+                a1 := arg1.Bool()
+                a2 := arg2.Bool()
                 switch cmp {
                 case if_eq:
                     tf = (a1 == a2)
@@ -378,12 +380,12 @@ func getCmp(arg1, arg2 reflect.Value, cmp int) (tf bool, stat int) {
                     stat = CMP_BOOL
                 }
 
-            case *reflect.ChanValue:
+            case reflect.Chan:
                 stat = CMP_CHANN
 
-            case *reflect.ComplexValue:
-                a1 := av1.Get()
-                a2 := arg2.(*reflect.ComplexValue).Get()
+            case reflect.Complex64, reflect.Complex128:
+                a1 := arg1.Complex()
+                a2 := arg2.Complex()
                 switch cmp {
                 case if_eq:
                     tf = (a1 == a2)
@@ -393,9 +395,9 @@ func getCmp(arg1, arg2 reflect.Value, cmp int) (tf bool, stat int) {
                     stat = CMP_CPLX
                 }
 
-            case *reflect.FloatValue:
-                a1 := av1.Get()
-                a2 := arg2.(*reflect.FloatValue).Get()
+            case reflect.Float32, reflect.Float64:
+                a1 := arg1.Float()
+                a2 := arg2.Float()
                 switch cmp {
                 case if_eq:
                     tf = (a1 == a2)
@@ -413,12 +415,13 @@ func getCmp(arg1, arg2 reflect.Value, cmp int) (tf bool, stat int) {
                     panic(unk_oper)
                 }
 
-            case *reflect.FuncValue:
+            case reflect.Func:
                 stat = CMP_FUNC
 
-            case *reflect.IntValue:
-                a1 := av1.Get()
-                a2 := arg2.(*reflect.IntValue).Get()
+            case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
+                    reflect.Int64:
+                a1 := arg1.Int()
+                a2 := arg2.Int()
                 switch cmp {
                 case if_eq:
                     tf = (a1 == a2)
@@ -436,12 +439,12 @@ func getCmp(arg1, arg2 reflect.Value, cmp int) (tf bool, stat int) {
                     panic(unk_oper)
                 }
 
-            case *reflect.MapValue:
+            case reflect.Map:
                 stat = CMP_MAP
 
-            case *reflect.StringValue:
-                a1 := av1.Get()
-                a2 := arg2.(*reflect.StringValue).Get()
+            case reflect.String:
+                a1 := arg1.String()
+                a2 := arg2.String()
                 switch cmp {
                 case if_eq:
                     tf = (a1 == a2)
@@ -459,9 +462,10 @@ func getCmp(arg1, arg2 reflect.Value, cmp int) (tf bool, stat int) {
                     panic(unk_oper)
                 }
 
-            case *reflect.UintValue:
-                a1 := av1.Get()
-                a2 := arg2.(*reflect.UintValue).Get()
+            case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32,
+                    reflect.Uint64:
+                a1 := arg1.Uint()
+                a2 := arg2.Uint()
                 switch cmp {
                 case if_eq:
                     tf = (a1 == a2)

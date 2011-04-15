@@ -25,12 +25,9 @@ type ContextItself []interface{}
 func execParam(wr io.Writer, par interface{}, ctx []interface{}, ln int,
         strict bool) (ret reflect.Value, err os.Error) {
     switch pv := par.(type) {
-    case *reflect.IntValue:
-        // Argumentem jest liczba staloprzecinowa
-        ret = pv
-
-    case  *reflect.FloatValue:
-        // Argumentem jest liczba zmiennoprzecinkowa
+    case reflect.Value:
+        // Argumentem jest liczba staloprzecinowa lub zmiennoprzecinkowa
+        // Pomijamy inne przypadki - powinny byc odrzucone przez parser.
         ret = pv
 
     case []Element:
@@ -75,8 +72,6 @@ func execArgs(wr io.Writer, vf *VarFunElem, ctx []interface{}) (
 // Zwraca zmienna lub nil jesli zmienna nie istnieje.
 func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         val reflect.Value, err os.Error) {
-
-    //# 2.48
     var (
         path []reflect.Value
         name_id reflect.Value
@@ -87,12 +82,13 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         // Jesli jest dynamiczna, dla bezpieczenstwa, do jej okreslenia
         // uzywamy trybu strict.
         switch pe := pv.name.(type) {
-        case *reflect.StringValue, *reflect.IntValue, *reflect.FloatValue:
+        case reflect.Value:
             // Elementem sciezki jest:
-            //   *reflect.StringValue: nazwa tekstowa lub indeks tekstowy,
-            //   *reflect.IntValue:    indeks calkowity,
-            //   *reflect.FloatValue:  indeks zmiennorzecinkowy.
-            name_id = pe.(reflect.Value)
+            //   reflect.String: nazwa tekstowa lub indeks tekstowy,
+            //   reflect.Int:    indeks calkowity,
+            //   reflect.Float:  indeks zmiennorzecinkowy.
+            // Pomijamy inne przypadki - powinny byc odrzucone przez parser.
+            name_id = pe
 
         case []Element:
             // Elementem sciezki jest indeks tekstowy.
@@ -114,7 +110,7 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         case nil:
             // Brak nazwy wiec elementem sciezki jest czyste wywolanie funkcji
             // lub sam kontekst.
-            name_id = nil
+            name_id = reflect.Value{}
 
         default:
             panic(fmt.Sprintf(
@@ -123,26 +119,22 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         }
         path = append(path, name_id)
     }
-    //# 4.44
 
     args, err := execArgs(wr, vf, ctx)
     if err != nil {
         return
     }
-    //# 4.55
     stat := RUN_OK
     name_id = path[0]
     // name_id == nil tylko wtedy gdy na poczatku sciezki jest sam kontekst '$@'
     // lub czyste wywolanie funkcji '$(...)'
-    if name_id != nil || vf.fun {
+    if name_id.IsValid() || vf.fun {
         // Poszukujemy zmiennej lub funkcji pasujacej do poczatku sciezki
         for ii := len(ctx); ii > 0; {
             ii--
-            //# 4.55
             val, stat = getVarFun(
                 reflect.NewValue(ctx[ii]), name_id, args, vf.fun,
             )
-            //# 12.79
             if stat == RUN_OK {
                 // Znalezlismy zmienna
                 break
@@ -158,16 +150,16 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         }
         if stat != RUN_OK {
             if strict {
-                return nil, RunErr{vf.ln, stat, nil}
+                err = RunErr{vf.ln, stat, nil}
+                return
             }
-            return nil, nil
+            return
         }
     } else {
         // Poczatek sciezki wskazuje na sam stos kontekstow.
         // Traktujemy go jak normalna wartosc typu slice
         val = reflect.NewValue(ContextItself(ctx))
     }
-    //# 12.78
 
     // Poczatek sciezki do zmiennej znaleziony - przechodzimy reszte.
     for _, name_id = range path[1:] {
@@ -179,12 +171,12 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         val, stat = getVarFun(val, name_id, args, vf.fun)
         if stat != RUN_OK {
             if strict || (stat != RUN_NOT_FOUND && stat != RUN_NIL_CTX) {
-                return nil, RunErr{vf.ln, stat, nil}
+                err = RunErr{vf.ln, stat, nil}
+                return
             }
-            return nil, nil
+            return
         }
     }
-    //# 12.75
     return
 }
 
@@ -200,18 +192,14 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
             }
 
         case *VarFunElem:
-            //# 2.67
             var val reflect.Value
-            //# 3.00
             val, err = execVarFun(wr, el, ctx, tpl.Strict)
             if err != nil {
                 return
             }
-            //# 13.46
             // Dereferencja zwroconej wartosci
             dereference(&val)
-            //# 15.33
-            if val == nil {
+            if !val.IsValid() {
                 break
             }
             switch vtn := val.Interface().(type) {
@@ -293,28 +281,23 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
             for_tpl := *tpl
             // Dereferencja argumentu
             dereference(&val)
-            switch vv := val.(type) {
-            case reflect.ArrayOrSliceValue:
-                vv_len := vv.Len()
-                if vv_len != 0 {
+            switch val.Kind() {
+            case reflect.Array, reflect.Slice:
+                val_len := val.Len()
+                if val_len != 0 {
                     for_tpl.elems = el.iter_block
                     // Tworzymy kontekst dla iteracyjnego bloku for
                     local_ctx := make(map[string]interface{})
                     for_ctx := append(ctx, local_ctx)
-                    for ii := 0; ii < vv_len; ii++ {
-                        //# 1.69
-                        ev := vv.Elem(ii)
-                        //# 3.14
-                        if ev == nil {
-                            local_ctx[el.val] = nil
-                        } else {
+                    for ii := 0; ii < val_len; ii++ {
+                        ev := val.Index(ii)
+                        if ev.IsValid() {
                             local_ctx[el.val] = ev.Interface()
+                        } else {
+                            local_ctx[el.val] = nil
                         }
-                        //# 4.77
                         local_ctx[el.iter] = ii + el.iter_inc
-                        //# 6.81
                         err = for_tpl.Run(wr, for_ctx...)
-                        //# 25.54
                         if err != nil {
                             return
                         }
@@ -327,8 +310,8 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                         return
                     }
                 }
-            case *reflect.MapValue:
-                if vv.Len() != 0 {
+            case reflect.Map:
+                if val.Len() != 0 {
                     if el.iter_inc != 0 {
                         return RunErr{el.ln, RUN_INC_MAP_KEY, nil}
                     }
@@ -336,12 +319,12 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                     // Tworzymy kontekst dla iteracyjnego bloku for
                     local_ctx := make(map[string]interface{})
                     for_ctx := append(ctx, local_ctx)
-                    for _, key := range vv.Keys() {
-                        ev := vv.Elem(key)
-                        if ev == nil {
-                            local_ctx[el.val] = nil
-                        } else {
+                    for _, key := range val.MapKeys() {
+                        ev := val.MapIndex(key)
+                        if ev.IsValid() {
                             local_ctx[el.val] = ev.Interface()
+                        } else {
+                            local_ctx[el.val] = nil
                         }
                         local_ctx[el.iter] = key.Interface()
                         err = for_tpl.Run(wr, for_ctx...)
@@ -357,21 +340,21 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                         return
                     }
                 }
-             case *reflect.ChanValue:
+             case reflect.Chan:
                 for_tpl.elems = el.iter_block
                 // Tworzymy kontekst dla iteracyjnego bloku for
                 local_ctx := make(map[string]interface{})
                 for_ctx := append(ctx, local_ctx)
                 ii := el.iter_inc
                 for {
-                    ev, ok := vv.Recv()
+                    ev, ok := val.Recv()
                     if !ok {
                         break
                     }
-                    if ev == nil {
-                        local_ctx[el.val] = nil
-                    } else {
+                    if ev.IsValid() {
                         local_ctx[el.val] = ev.Interface()
+                    } else {
+                        local_ctx[el.val] = nil
                     }
                     local_ctx[el.iter] = ii
                     err = for_tpl.Run(wr, for_ctx...)
@@ -388,7 +371,7 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                         return
                     }
                 }
-           case nil:
+           case reflect.Invalid:
                 for_tpl.elems = el.else_block
                 err = for_tpl.Run(wr, ctx...)
                 if err != nil {
@@ -402,7 +385,7 @@ func (tpl *Template) Run(wr io.Writer, ctx ...interface{}) (err os.Error){
                     append(
                         ctx,
                         map[string]interface{} {
-                            el.val:  vv.Interface(),
+                            el.val:  val.Interface(),
                             el.iter: nil,
                         },
                     )...
