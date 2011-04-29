@@ -391,40 +391,40 @@ All the text between $# and #$ is ignored: not interpreted and not printed.
 If you want modularize your templates, you can do like in folowing example:
 
     type Ctx struct {
-        a int
-        b string
-        c *SubCtx
-        tpl1 *Template
-        tpl2 *Template
+        A int
+        B string
+        C *SubCtx
+        Tpl1 *Template
+        Tpl2 *Template
     }
 
     type SubCtx struct {
-        s int
-        t float
+        S int
+        T float
     } 
 
 Main template:
 
-    Variables from main context: $a, $b
+    Variables from main context: $A, $B
 
-    First subtemplate: $tpl1
+    First subtemplate: $Tpl1
 
-    Second subtemplate: $tpl2.Nested(c)
+    Second subtemplate: $Tpl2.Nested(C)
 
 Subtemplate tpl1:
 
-    This template uses main context: $a, $b
+    This template uses main context: $A, $B
 
-    You can lead to a loop if you uncoment this: $# $tpl1 #$
+    You can lead to a loop if you uncoment this: $# $Tpl1 #$
 
 Subtemplate tpl2:
 
-    This template operates on context passed to it via Nested method: $s, $t
+    This template operates on context passed to it via Nested method: $S, $RT
 
 As you can see, you can use subtemplates in two ways:
 
-1. Render subtemplate with main context by typing `$tpl1`.
-2. Render subtemplate with custom context: `$tpl2.Nested(custom_context)`.
+1. Render subtemplate with main context by typing `$Tpl1`.
+2. Render subtemplate with custom context: `$Tpl2.Nested(custom_context)`.
 
 ## Context stack
 
@@ -432,14 +432,14 @@ You can divide the data context into two (or more) parts. For example, the first
 part of the context may be global data:
 
     type Ctx struct {
-        a, b  string
+        A, B  string
     }
 
 the second part may be local data:
 
     type LocalCtx struct {
-        b string
-        c int
+        B string
+        C int
     }
 
 You can pass them together to the *Run* method:
@@ -462,12 +462,12 @@ You can pass them together to the *Run* method:
         }
     }
 
-When `$b` occurs in a template, *Run* first looks for it in *ld*, and only if it
+When `$B` occurs in a template, *Run* first looks for it in *ld*, and only if it
 doesn't find it, looks for it in *data*.
 
 You may set the global data once and use they together wit local data created
-each *hello()* call. Additionally, if *ld* isn't nil, the *b* field in *ld*
-will be rendered, not the *b* field in *data*.
+each *hello()* call. Additionally, if *ld* isn't nil, the *B* field in *ld*
+will be rendered, not the *B* field in *data*.
 
 You could create a context stack using the values without internal structure:
 
