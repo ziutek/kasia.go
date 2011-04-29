@@ -77,12 +77,12 @@ tests = []Test{
         },
 },{
     // struct: 'if', funkcja zwracajaca funkcje, complex
-    `$if f(1)('str')(2.1) == c:OK $end $f(a)("eeee")(b) $if b==2.1:$a$b$c$end`,
+    `$if F(1)('str')(2.1) == c:OK $end $F(A)("eeee")(B) $if B==2.1:$A$B$c$end`,
     `OK  (6+2.1i) 22.1(4+2.1i)`, true,
     struct {
-        f func(int)func(string)func(float64)complex128
-        a int
-        b float64
+        F func(int)func(string)func(float64)complex128
+        A int
+        B float64
         c complex128
     } {
         func(i int) func(string)func(float64)complex128 {
@@ -98,9 +98,9 @@ tests = []Test{
     },
 },{
     // struct: 'if' jednoargumentowy, funkcja bez argumentow
-    `$if f: $f() $end $if f(): First $else: Second $end`,
+    `$if F: $F() $end $if F(): First $else: Second $end`,
     ` 0   Second `, true,
-    struct {f *func()int}{&f1},
+    struct {F *func()int}{&f1},
 },{
     // func:
     `$((((((((1)))))))) $(0) $(1) $((-2))`,
@@ -182,6 +182,7 @@ func TestAll(t *testing.T) {
     }
 }
 
+
 type Environment struct {
     msg_host, msg_path, submit_path, static_path string
 }
@@ -196,7 +197,7 @@ var env = Environment {
 type MsgCtx struct {
     start_data string
     tekst      string
-    tpl        *Template
+    Tpl        *Template
 }
 
 func TestMultiCtx(t *testing.T) {
@@ -204,11 +205,12 @@ func TestMultiCtx(t *testing.T) {
     tpl, _ := Parse("$[0].content $[1].static_path")
     ctx := MsgCtx{"1234-22-33", "abcd", tpl}
 
-    tpl_txt := "$content $start_data $tekst $msg_host $msg_path $tpl.Nested(@)"
+    tpl_txt := "$content $start_data $tekst $msg_host $msg_path $Tpl.Nested(@)"
     expect := "KKKKK 1234-22-33 abcd www.lnet.pl /message/ KKKKK /static/"
 
     check(t, tpl_txt, expect, true, divs, env, ctx)
 }
+
 
 func TestMultiFuncCtx(t *testing.T) {
     fun1 := func(a int) int { return 2 * a }
@@ -220,6 +222,7 @@ func TestMultiFuncCtx(t *testing.T) {
 
     check(t, tpl_txt, expect, true, fun1, fun2, fun3, "bla bla")
 }
+
 
 func TestMultiSlice(t *testing.T) {
     s1 := []float32{1.1, 2.2, 3.3}
@@ -250,6 +253,7 @@ func xrange(start, stop int) <-chan int {
     return c
 }
 
+
 func TestChannel(t *testing.T) {
     tpl_txt := "$for i+,v in xrange(4,8): $i,$v $end"
     expect := " 1,4  2,5  3,6  4,7 "
@@ -257,19 +261,20 @@ func TestChannel(t *testing.T) {
     check(t, tpl_txt, expect, true, ctx)
 }
 
+
 type Tmf struct {
     m int
 }
-func (t *Tmf) mulf(i int) func(int)int {
+func (t *Tmf) Mulf(i int) func(int)int {
     return func(c int)int { return t.m * i * c }
 }
-func (t *Tmf) mul(i int) func()int {
+func (t *Tmf) Mul(i int) func()int {
     return func()int { return t.m * i }
 }
 
 func TestMethodFunc(t *testing.T) {
     ctx := &Tmf{2}
-    tpl_txt := "$mulf(3)(5) $mul(3)"
+    tpl_txt := "$Mulf(3)(5) $Mul(3)"
     expect := "30 6"
     check(t, tpl_txt, expect, true, ctx)
 }

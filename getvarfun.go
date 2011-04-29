@@ -82,7 +82,7 @@ func dereference(val *reflect.Value) {
 // Funkcja sprawdza zgodnosc typow argumentow. Jesli to konieczne konwertuje
 // argumenty do typu interface{}. Jesli to potrzebne, funkcja odpowiednio
 // dostosowuje args dla funkcji.
-func argsMatch(ft reflect.Type, args *[]reflect.Value, method int) int {
+func argsMatch(ft reflect.Type, args []reflect.Value, method int) int {
     if ft.NumOut() == 0 {
         return RUN_NOT_RET
     }
@@ -92,32 +92,23 @@ func argsMatch(ft reflect.Type, args *[]reflect.Value, method int) int {
     var head_args, tail_args []reflect.Value
     if ft.IsVariadic() {
         num_in--
-        if len(*args) < num_in {
+        if len(args) < num_in {
             return RUN_WRONG_ARG_NUM
         }
-        head_args = (*args)[0:num_in]
-        tail_args = (*args)[num_in:]
+        head_args = args[0:num_in]
+        tail_args = args[num_in:]
     } else {
-        if num_in != len(*args) {
+        if num_in != len(args) {
             return RUN_WRONG_ARG_NUM
         }
-        head_args = *args
+        head_args = args
     }
 
     // Sprawdzamy zgodnosc typow poczatkowych argumentow funkcji
     for kk, av := range head_args {
-        at := ft.In(kk + method)
-        //fmt.Printf("DEB: ctx: %s, fun: %s\n", av.Type(), at)
-        if at != av.Type() {
-            // Sprawdzamy czy arguentem funkcji jest typ interface{}
-            if at.Kind() == reflect.Interface && at.NumMethod() == 0 {
-                // Zmieniamy typ argumentu przekazywanego do funkcji
-                vi := av.Interface()
-                // TODO: Sprawdzic czy da sie bez posrednictwa wskaznika
-                head_args[kk] = reflect.NewValue(&vi).Elem()
-            } else {
-                return RUN_WRONG_ARG_TYP
-            }
+        at := ft.In(kk + method) // Typ argumentu
+        if !av.Type().AssignableTo(at) {
+            return RUN_WRONG_ARG_TYP
         }
     }
 
@@ -126,29 +117,13 @@ func argsMatch(ft reflect.Type, args *[]reflect.Value, method int) int {
     }
 
     // Okreslamy typ argumentów zawartych w dotdotdot
-    st := ft.In(ft.NumIn() - 1) // slice
-    at := st.Elem()
-    at_is_interface := (at.Kind() == reflect.Interface && at.NumMethod() == 0)
-    // Przygotowujemy miejsce na argumenty
-    ddd := reflect.MakeSlice(st, len(tail_args), len(tail_args))
-    for kk, av := range tail_args {
-        if at != av.Type() {
-            // Sprawdzamy czy arguentem funkcji jest typ interface{}
-            if at_is_interface {
-                // Zmieniamy typ argumentu przekazywanego do funkcji
-                vi := av.Interface()
-                // TODO: Sprawdzic czy da sie bez posrednictwa wskaznika
-                tail_args[kk] = reflect.NewValue(&vi).Elem()
-            } else {
-                return RUN_WRONG_ARG_TYP
-            }
+    st := ft.In(ft.NumIn() - 1) // zawsze slice
+    at := st.Elem() // Konkretny typ argumentu dotdotdot
+    for _, av := range tail_args {
+        if !av.Type().AssignableTo(at) {
+            return RUN_WRONG_ARG_TYP
         }
-        // Umieszczamy argument w ddd
-        ddd.Index(kk).Set(av)
     }
-
-    // Zwracamy zmodyfikowana tablice argumentow
-    *args = append(head_args, ddd)
 
     return RUN_OK
 }
@@ -183,7 +158,7 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
             method := tt.Method(ii)
             // Sprawdzamy zgodnosc nazwy metody oraz typu receiver'a
             if method.Name == name.String() && tt == method.Type.In(0) {
-                stat = argsMatch(method.Type, &args, 1)
+                stat = argsMatch(method.Type, args, 1)
                 if stat != RUN_OK {
                     return
                 }
@@ -230,17 +205,8 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
 
         case reflect.Map:
             kt := ctx.Type().Key()
-            if name.Type() != kt {
-                if kt.Kind() == reflect.Interface && kt.NumMethod() == 0 {
-                    // Jesli mapa posiada klucz typu interface{} to
-                    // przeksztalcamy indeks na typ interface{}
-                    vi := name.Interface()
-                    // TODO: Sprawdzic czy da sie bez posrednictwa wskaznika
-                    name = reflect.NewValue(&vi).Elem()
-                } else {
-                    stat = RUN_NOT_FOUND
-                    return
-                }
+            if !name.Type().AssignableTo(kt) {
+                stat = RUN_NOT_FOUND
             }
             ctx = ctx.MapIndex(name)
             if !ctx.IsValid() {
@@ -283,7 +249,7 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
         ft := ctx.Type()
         if fun || ft.NumIn() == 0 {
             // Sprawdzamy zgodnosc liczby argumentow
-            stat = argsMatch(ft, &args, 0)
+            stat = argsMatch(ft, args, 0)
             if stat != RUN_OK {
                 return
             }

@@ -153,9 +153,9 @@ func parse1Param(txt *[]byte, lnum *int, stab map[string]string) (
                 err = ParseErr{*lnum, PARSE_BAD_FLOINT}
                 return
             }
-            par = reflect.NewValue(fv)
+            par = reflect.ValueOf(fv)
         } else {
-            par = reflect.NewValue(iv)
+            par = reflect.ValueOf(iv)
         }
         frag = frag[ii:]
     } else {
@@ -208,14 +208,14 @@ func parse1VarFun(symbol string, txt *[]byte, lnum *int, stab map[string]string,
             if ii == -1 {
                 ii = len(frag)
             }
-            el.name = reflect.NewValue(getSymbol(string(frag[0:ii]), stab))
+            el.name = reflect.ValueOf(getSymbol(string(frag[0:ii]), stab))
             frag = frag[ii:]
         } else {
             err = ParseErr{*lnum, PARSE_BAD_NAME}
             return
         }
     } else {
-        el.name = reflect.NewValue(getSymbol(symbol, stab))
+        el.name = reflect.ValueOf(getSymbol(symbol, stab))
     }
 
     // Sprawdzamy czy sa argumenty

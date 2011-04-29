@@ -38,7 +38,7 @@ func execParam(wr io.Writer, par interface{}, ctx []interface{}, ln int,
         if err != nil {
             return
         }
-        ret = reflect.NewValue(buf.String())
+        ret = reflect.ValueOf(buf.String())
 
     case *VarFunElem:
         // Argumentem jest zmienna
@@ -98,7 +98,7 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
             if err != nil {
                 return
             }
-            name_id = reflect.NewValue(buf.String())
+            name_id = reflect.ValueOf(buf.String())
 
         case *VarFunElem:
             // Elementem sciezki jest zmienna/funkcja ktora zwraca indeks
@@ -133,7 +133,7 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
         for ii := len(ctx); ii > 0; {
             ii--
             val, stat = getVarFun(
-                reflect.NewValue(ctx[ii]), name_id, args, vf.fun,
+                reflect.ValueOf(ctx[ii]), name_id, args, vf.fun,
             )
             if stat == RUN_OK {
                 // Znalezlismy zmienna
@@ -158,7 +158,7 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
     } else {
         // Poczatek sciezki wskazuje na sam stos kontekstow.
         // Traktujemy go jak normalna wartosc typu slice
-        val = reflect.NewValue(ContextItself(ctx))
+        val = reflect.ValueOf(ContextItself(ctx))
     }
 
     // Poczatek sciezki do zmiennej znaleziony - przechodzimy reszte.
