@@ -57,13 +57,13 @@ The simplest example is:
     )
 
     type Ctx struct {
-        h, w string
+        H, W string
     }
 
     func main() {
         ctx := &Ctx{"Hello", "world"}
 
-        tpl, err := kasia.Parse("$h $w!\n")
+        tpl, err := kasia.Parse("$H $W!\n")
         if err != nil {
             fmt.Println(err)
             return
