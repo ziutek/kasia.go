@@ -11,6 +11,7 @@ const (
     RUN_NOT_FOUND
     RUN_WRONG_ARG_NUM
     RUN_WRONG_ARG_TYP
+    RUN_UNEXPORTED
     RUN_NOT_RET
     RUN_INDEX_OOR
     RUN_UNK_TYPE
@@ -40,6 +41,7 @@ func (re RunErr) String() (txt string) {
         "variable not found",
         "wrong number of arguments",
         "wrong argument type",
+        "unexported variable",
         "there isn't return value",
         "index out of range",
         "unknown type",
@@ -185,16 +187,25 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
             switch name.Kind() {
             case reflect.String:
                 // Zwracamy pole struktury o podanej nazwie
-                ctx = ctx.FieldByName(name.String())
-                if !ctx.IsValid() {
+                ft, ok := ctx.Type().FieldByName(name.String())
+                if !ok {
                     stat = RUN_NOT_FOUND
                     return
                 }
+                if ft.PkgPath != "" {
+                    stat = RUN_UNEXPORTED
+                    return
+                }
+                ctx = ctx.FieldByIndex(ft.Index)
             case reflect.Int:
                 // Zwracamy pole sruktury o podanym indeksie
                 fi := int(name.Int())
                 if fi < 0 || fi >= ctx.NumField() {
                     stat = RUN_INDEX_OOR
+                    return
+                }
+                if ctx.Type().Field(fi).PkgPath != "" {
+                    stat = RUN_UNEXPORTED
                     return
                 }
                 ctx = ctx.Field(fi)

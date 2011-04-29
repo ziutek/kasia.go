@@ -146,6 +146,7 @@ func execVarFun(wr io.Writer, vf *VarFunElem, ctx []interface{}, strict bool) (
             // - skladowa jest rowna nil,
             // - skladowa mie pasuje do zadanego wywolania funkcj (nie jest
             //   funkcja lub nie pasuje pod wzgledem argumentow).
+            // - skladowa jest wartoscia nieeksportowana
             // Na obecna chwile getVarFun nie zwraca innych bledow.
         }
         if stat != RUN_OK {

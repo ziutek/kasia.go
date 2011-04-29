@@ -13,14 +13,14 @@ type Test struct {
 }
 
 type S1 struct {
-    a int
-    b float64
+    A int
+    B float64
 }
 
 var (
 
 f1 = func() int { return 0 }
-tpl1, _ = Parse("$a $b")
+tpl1, _ = Parse("$A $B")
 
 tests = []Test{
 {
@@ -60,9 +60,9 @@ tests = []Test{
     map[float64]string{0.1: "a", -1.1: "b"},
 },{
     // map: if elif
-    `$if kind.a: A $elif kind.b: B $else: unk $end`,
+    `$if Kind.a: A $elif Kind.b: B $else: unk $end`,
     ` B `, true,
-    struct{kind map[string]bool}{map[string]bool{"b": true}},
+    struct{Kind map[string]bool}{map[string]bool{"b": true}},
 },{
     // map: Any key, any value
     "$[1]\n$[2.2]\n$[i]\n$[t]\n$i\n$t\n",
@@ -77,13 +77,13 @@ tests = []Test{
         },
 },{
     // struct: 'if', funkcja zwracajaca funkcje, complex
-    `$if F(1)('str')(2.1) == c:OK $end $F(A)("eeee")(B) $if B==2.1:$A$B$c$end`,
+    `$if F(1)('str')(2.1) == C:OK $end $F(A)("eeee")(B) $if B==2.1:$A$B$C$end`,
     `OK  (6+2.1i) 22.1(4+2.1i)`, true,
     struct {
         F func(int)func(string)func(float64)complex128
         A int
         B float64
-        c complex128
+        C complex128
     } {
         func(i int) func(string)func(float64)complex128 {
             return func(s string) func(float64)complex128 {
@@ -132,19 +132,19 @@ tests = []Test{
     []string {"A", "B", "C"},
 },{
     // struct: 'for'
-    "$for i+, v in arr:$i: $v.a, $v.b\n$end\n$for i,v in x:A$else:B$end\n\n",
+    "$for i+, v in Arr:$i: $v.A, $v.B\n$end\n$for i,v in x:A$else:B$end\n\n",
     "1: 0, 0.5\n2: 1, 0.25\n3: 2, 0.125\nB\n", true,
-    struct{arr []S1}{[]S1{S1{0, 1/2.0}, S1{1, 1/4.0}, S1{2, 1/8.0}}},
+    struct{Arr []S1}{[]S1{S1{0, 1/2.0}, S1{1, 1/4.0}, S1{2, 1/8.0}}},
 },{
     //map: Nested templates
     "$tpl\n $tpl.Nested(ctx1)\n $tpl.Nested(ctx1, ctx2)\n",
     "1 1.1\n 2 2.2\n 2 3.3\n", true,
     map[string]interface{} {
         "tpl": tpl1,
-        "a":   1,
-        "b":   1.1,
+        "A":   1,
+        "B":   1.1,
         "ctx1": S1{2, 2.2},
-        "ctx2": map[string]float64{"b": 3.3},
+        "ctx2": map[string]float64{"B": 3.3},
     },
 },{
     //int
@@ -184,28 +184,28 @@ func TestAll(t *testing.T) {
 
 
 type Environment struct {
-    msg_host, msg_path, submit_path, static_path string
+    MsgHost, MsgPath, SubmitPath, StaticPath string
 }
 var env = Environment {
-    msg_host:    "www.lnet.pl",
-    msg_path:    "/message/",
-    submit_path: "/submit/",
-    static_path: "/static/",
+    MsgHost:    "www.lnet.pl",
+    MsgPath:    "/message/",
+    SubmitPath: "/submit/",
+    StaticPath: "/static/",
 }
 
 
 type MsgCtx struct {
-    start_data string
-    tekst      string
+    StartData string
+    Tekst      string
     Tpl        *Template
 }
 
 func TestMultiCtx(t *testing.T) {
     divs := map[string]string{"content": "KKKKK"}
-    tpl, _ := Parse("$[0].content $[1].static_path")
+    tpl, _ := Parse("$[0].content $[1].StaticPath")
     ctx := MsgCtx{"1234-22-33", "abcd", tpl}
 
-    tpl_txt := "$content $start_data $tekst $msg_host $msg_path $Tpl.Nested(@)"
+    tpl_txt := "$content $StartData $Tekst $MsgHost $MsgPath $Tpl.Nested(@)"
     expect := "KKKKK 1234-22-33 abcd www.lnet.pl /message/ KKKKK /static/"
 
     check(t, tpl_txt, expect, true, divs, env, ctx)

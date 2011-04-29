@@ -173,6 +173,8 @@ you can get values from it using the name or index of a field:
     $E.a  ==  $[4].a
     $G.A  ==  $[6][0]
 
+You can get values only from exported fields. 
+
 You can use variables or strings to specify struct fields. If $A == 2 and $B == "A"
 then:
 
@@ -196,10 +198,8 @@ methods:
 
 [Note about pointer methods](http://groups.google.com/group/golang-nuts/browse_thread/thread/ec6b27e332ed7f77).
 
-Types of arguments passed to a function/method must match the function
-definition. There is one exception: interface{} types in a function definition
-match any type. This will be improved in the future if the reflect package
-provides a Type.Implement(TypeInterface) method.
+Types of arguments passed to a function/method must be assignable to the
+function arguments.
 
 If variable F is a function, `$F` or `$F()` calls this function without parameters
 and returns its first return value.
