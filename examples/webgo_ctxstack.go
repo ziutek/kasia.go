@@ -7,12 +7,12 @@ import (
 )
 
 type Ctx struct {
-    a, b  string
+    A, B  string
 }
 
 type LocalCtx struct {
-    b string
-    c int
+    B string
+    C int
 }
 
 var (
@@ -37,10 +37,10 @@ func hello(web_ctx *web.Context, val string) {
 
 const tpl_txt = `
 <html><body>
-    $a<br>
-    Parameter: $b
-    $if c:
-        , length: $c
+    $A<br>
+    Parameter: $B
+    $if C:
+        , length: $C
     $end
 </body></html>
 `
