@@ -1,10 +1,10 @@
 package main
 
 import (
-    "time"
     "os"
     "fmt"
     "template"
+    "testing"
     "github.com/ziutek/kasia.go"
 )
 
@@ -33,29 +33,29 @@ func (*DevNull) Write(p []byte) (int, os.Error) {
 }
 var devnull DevNull
 
-func kbench(n int) int64 {
+func kbench(b *testing.B) {
+    b.StopTimer()
     tpl := kasia.MustParse(bench_kt)
     tpl.EscapeFunc = nil
-    start := time.Nanoseconds()
-    for ii := 0; ii < n; ii++ {
+    b.StartTimer()
+    for ii := 0; ii < b.N; ii++ {
         err := tpl.Run(&devnull, bctx)
         if err != nil {
             panic(err)
         }
     }
-    return int64(n) * 1e12 / (time.Nanoseconds() - start)
 }
 
-func tbench(n int) int64 {
+func tbench(b *testing.B) {
+    b.StopTimer()
     tpl := template.MustParse(bench_tpl, nil)
-    start := time.Nanoseconds()
-    for ii := 0; ii < n; ii++ {
+    b.StartTimer()
+    for ii := 0; ii < b.N; ii++ {
         err := tpl.Execute(&devnull, bctx)
         if err != nil {
             panic(err)
         }
     }
-    return int64(n) * 1e12 / (time.Nanoseconds() - start)
 }
 
 func main() {
@@ -67,6 +67,8 @@ func main() {
                   AĄBCĆDEĘFGHIJKLŁMNŃOÓPRSŚTUVWXYŻŹ`,
         }
     }
-    n := 100
-    fmt.Printf("Kasia: %d, template: %d [r/s]\n", kbench(n), tbench(n))
+    fmt.Println("Kasia:")
+    fmt.Println(testing.Benchmark(kbench))
+    fmt.Println("Go template:")
+    fmt.Println(testing.Benchmark(tbench))
 }
