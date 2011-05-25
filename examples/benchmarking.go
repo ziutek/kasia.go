@@ -11,7 +11,7 @@ import (
 const (
 bench_kt = `
 $for i, v in Arr:
-    $i: $v.A, $v.B
+    $i: $v.A $v.B
 $end
 `
 bench_tpl = `
@@ -28,9 +28,11 @@ var bctx = struct {
 }{}
 
 type DevNull struct{}
+
 func (*DevNull) Write(p []byte) (int, os.Error) {
     return len(p), nil
 }
+
 var devnull DevNull
 
 func kbench(b *testing.B) {
@@ -59,7 +61,6 @@ func tbench(b *testing.B) {
 }
 
 func main() {
-    // Szykujemy dane
     for ii := 0; ii < len(bctx.Arr); ii++ {
         bctx.Arr[ii] = map[string]interface{}{
             "I": ii, "A": ii * 2,
