@@ -33,15 +33,15 @@ func (*DevNull) Write(p []byte) (int, os.Error) {
     return len(p), nil
 }
 
-var devnull DevNull
+var (
+    devnull DevNull
+    gtpl *template.Template
+    ktpl *kasia.Template
+)
 
 func kbench(b *testing.B) {
-    b.StopTimer()
-    tpl := kasia.MustParse(bench_kt)
-    tpl.EscapeFunc = nil
-    b.StartTimer()
     for ii := 0; ii < b.N; ii++ {
-        err := tpl.Run(&devnull, bctx)
+        err := ktpl.Run(&devnull, bctx)
         if err != nil {
             panic(err)
         }
@@ -49,11 +49,8 @@ func kbench(b *testing.B) {
 }
 
 func tbench(b *testing.B) {
-    b.StopTimer()
-    tpl := template.MustParse(bench_tpl, nil)
-    b.StartTimer()
     for ii := 0; ii < b.N; ii++ {
-        err := tpl.Execute(&devnull, bctx)
+        err := gtpl.Execute(&devnull, bctx)
         if err != nil {
             panic(err)
         }
@@ -61,6 +58,9 @@ func tbench(b *testing.B) {
 }
 
 func main() {
+    ktpl = kasia.MustParse(bench_kt)
+    ktpl.EscapeFunc = nil
+    gtpl = template.MustParse(bench_tpl, nil)
     for ii := 0; ii < len(bctx.Arr); ii++ {
         bctx.Arr[ii] = map[string]interface{}{
             "I": ii, "A": ii * 2,

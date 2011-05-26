@@ -3,6 +3,8 @@ package kasia
 import (
     "testing"
     "fmt"
+    "os"
+    "template"
 )
 
 type Test struct {
@@ -277,4 +279,68 @@ func TestMethodFunc(t *testing.T) {
     tpl_txt := "$Mulf(3)(5) $Mul(3)"
     expect := "30 6"
     check(t, tpl_txt, expect, true, ctx)
+}
+
+// BENCHMARKING
+
+const (
+bench_kt = `
+$for i, v in Arr:
+    $i: $v.A $v.B
+$end
+`
+bench_tpl = `
+{.repeated section Arr}
+    {.section @}
+        {I}: {A} {B}
+    {.end}
+{.end}
+`
+)
+
+var bctx = struct {
+    Arr [1000]map[string]interface{}
+}{}
+
+type DevNull struct{}
+
+func (*DevNull) Write(p []byte) (int, os.Error) {
+    return len(p), nil
+}
+
+var (
+    devnull DevNull
+    ktpl *Template
+    gtpl *template.Template
+)
+
+func BenchmarkKasia(b *testing.B) {
+    for ii := 0; ii < b.N; ii++ {
+        err := ktpl.Run(&devnull, bctx)
+        if err != nil {
+            panic(err)
+        }
+    }
+}
+
+func BenchmarkTemplates(b *testing.B) {
+    for ii := 0; ii < b.N; ii++ {
+        err := gtpl.Execute(&devnull, bctx)
+        if err != nil {
+            panic(err)
+        }
+    }
+}
+
+func init() {
+    ktpl = MustParse(bench_kt)
+    ktpl.EscapeFunc = nil
+    gtpl = template.MustParse(bench_tpl, nil)
+    for ii := 0; ii < len(bctx.Arr); ii++ {
+        bctx.Arr[ii] = map[string]interface{}{
+            "I": ii, "A": ii * 2,
+            "B": `aąbcćdeęfghijklłmnńoóprsśtuvwxżż
+                  AĄBCĆDEĘFGHIJKLŁMNŃOÓPRSŚTUVWXYŻŹ`,
+        }
+    }
 }

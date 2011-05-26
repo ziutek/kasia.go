@@ -11,4 +11,3 @@ GOFILES=\
 	compat.go\
 
 include $(GOROOT)/src/Make.pkg
-
