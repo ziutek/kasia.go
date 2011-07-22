@@ -1,3 +1,4 @@
+// Templating system for HTML and other text documents
 package kasia
 
 import (
