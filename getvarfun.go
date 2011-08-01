@@ -278,6 +278,10 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (
 
 // Funkcja zwraca wartosc logiczna argumentu
 func getBool(val reflect.Value) bool {
+	// Jednokrotna dereferencja jesli wartosc jest interfejsem
+    if val.Kind() == reflect.Interface {
+        val = val.Elem()
+    }
     switch val.Kind() {
     case reflect.Invalid:
         return false

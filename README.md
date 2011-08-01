@@ -318,7 +318,7 @@ Value is false when it:
 6. Is nil.
 7. Doesn't exist (even in strict mode)
 
-This form of *if* doesn't dereference interfaces or pointers before evaluation.
+This form of *if* doesn't dereference pointers before evaluation.
 
 You can use simple comparison in if/elif statement:
 

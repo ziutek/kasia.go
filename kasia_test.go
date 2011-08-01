@@ -225,7 +225,6 @@ func TestMultiFuncCtx(t *testing.T) {
     check(t, tpl_txt, expect, true, fun1, fun2, fun3, "bla bla")
 }
 
-
 func TestMultiSlice(t *testing.T) {
     s1 := []float32{1.1, 2.2, 3.3}
     s2 := []string{"a", "b"}
@@ -242,6 +241,14 @@ func TestCtxStackUnstr(t *testing.T) {
     expect := "2 Ala 3.14159"
 
     check(t, tpl_txt, expect, true, 2, "Ala", 3.14159)
+}
+
+func TestCtxStackBoolean(t *testing.T) {
+	tpl_txt := "$if @[0]: Should not be reached $end"
+	expect := ""
+
+	check(t, tpl_txt, expect, true, false) 
+
 }
 
 func xrange(start, stop int) <-chan int {
