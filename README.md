@@ -5,8 +5,7 @@
 Kasia.go is a Go implementation of the Kasia templating system.
 
 Kasia is primarily designed for HTML, but you can use it for anything you want.
-Its syntax is somewhat similar to the web.py templating system - Templator, but much
-much simpler.
+Its syntax is somewhat similar to the web.py templating system - Templator, but much much simpler.
 
 ## What does "Kasia" mean?
 
@@ -175,8 +174,8 @@ you can get values from it using the name or index of a field:
 
 You can get values only from exported fields. 
 
-You can use variables or strings to specify struct fields. If $A == 2 and $B == "A"
-then:
+You can use variables or strings to specify struct fields. If $A == 2 and
+$B == "A" then:
 
     $[A]  ==  $[2]  ==  $C
     $[B]  ==  $["$B"]  ==  $["A"]  ==  $A
@@ -187,8 +186,8 @@ subtemplates with the same context as the main template:
 
     $F(0)("$$$A $"and$" $$$["A"]", 1) == $['F'](0)('$$$A "and" $$$['A']', 1)
 
-In the previous example you can also see how to pass arguments to a function (even
-when the function returns another function). In the same way you can call
+In the previous example you can also see how to pass arguments to a function
+(even when the function returns another function). In the same way you can call
 methods:
 
     $:M1       // M1 has no arguments
@@ -198,11 +197,11 @@ methods:
 
 [Note about pointer methods](http://groups.google.com/group/golang-nuts/browse_thread/thread/ec6b27e332ed7f77).
 
-Types of arguments passed to a function/method must be assignable to the
+Types of arguments passed to the function/method must be assignable to the
 function arguments.
 
-If variable F is a function, `$F` or `$F()` calls this function without parameters
-and returns its first return value.
+If variable F is a function, `$F` or `$F()` calls this function without
+parameters and returns its first return value.
 
 If variable F is a reference (interface/pointer) to a function, `$F` returns the
 reference, `$F()` calls the function without parameters and returns its first
@@ -227,22 +226,22 @@ You can explicitly specify variables or function boundaries using braces:
 
     eee${A}eee uuu$:{A}uuu
 
-By default, if a variable doesn't exist you get an empty string. You can change
-this behavior by setting `Template.Strict` to true. Undefined variables now
-return an error code.  If a variable is used as argument to a function or an
-index it is always executed in strict mode.
+By default, if the variable doesn't exist you get an empty string. You can
+change this behavior by setting `Template.Strict` to true. Undefined variables
+now return an error code.  If the variable is used as argument to the function
+or an index it is always executed in strict mode.
 
-If variable is []byte slice its content is treated as text. It is better use
-[]byte than string if you don't use escaping, because it doesn't need conversion
-before write to io.Writer.
+If the variable is []byte slice its content is treated as text. It is better to
+use []byte than string if you don't use escaping, because it doesn't need
+conversion before write to io.Writer.
 
 `fmt.Fprint()` and `fmt.Sprint()` are used to render a different type
 of variables.
 
 ## Getting data from a map
 
-If the context is a map you can use it in a way similar to a struct context.
-If the map is has string key like this:
+If the context is a map you can use it in a way similar to the struct context.
+If the map has string key like this:
 
     map[string]interface{} {
         "a":    1,
@@ -262,7 +261,7 @@ you can get values from it like this:
     $:d[0](2.1) ==  $:['d'][0](2.1)
     $f(1)       ==  $["f"](1)
 
-If the map hes int key:
+If the map has int key:
 
     map[int]string {
         -1:     "minus jeden",
@@ -274,7 +273,8 @@ you can only use index notation:
     $[-1]
     $[101]
 
-Map may have a key of any type but, you can use directly (without using a variable) only string, int or float key.
+The map may have a key of any type but, you can use directly (without using a
+variable) only string, int or float keys.
 
 ## Escaping
 
@@ -287,11 +287,11 @@ If you want to use a different escape function, define your own as:
 
     func(io.Writer, []byte) os.Error
 
-and assign it to Template.EscapeFunc before rendering. Variables used as
+and assign it to the Template.EscapeFunc before rendering. Variables used as
 parameters or indexes are always unescaped.
 
-If you don't use `New()` to create templates, EscapeFunction is nil and there is
-no escaping.
+If you don't use `New()` to create template, EscapeFunction is nil and there is
+no escaping at all.
 
 ## Control statements
 
@@ -308,7 +308,7 @@ no escaping.
         Else text
     $end
 
-Value is false when it:
+The value is treated as false when it:
 
 1. Is bool and false.
 2. Is int and equal to 0.
@@ -332,9 +332,9 @@ You can use simple comparison in if/elif statement:
         B=$B, C=$C
     $end
 
-If the compared values have different types you should only use the '!=' and '=='
-operators. If the types match, Go comparison rules are applied. This form of
-*if* dereference interfaces and pointers before comparison.
+If the compared values have different types you should only use the '!=' and
+'==' operators. If the types match, Go comparison rules are applied. This form
+of *if* dereference interfaces and pointers before comparison.
 
 You can use braces for all statements (useful for `$end` statement):
 
@@ -352,21 +352,21 @@ You can use braces for all statements (useful for `$end` statement):
         D == nil or len(D) == 0
     $end
 
-D can be any type. If it's an array, a slice, a map or a channel, the first
-block is executed for each element of it and v = element value, i = element
-number or key. If value is a scalar, v = value, i = nil. If you add '+' to the
-index name:
+D can be value of any type. If it's an array, a slice, a map or a channel, the
+first block is executed for each element of it and v = element value,
+i = element number or key. If value is a scalar, v = value, i = nil.
+If you add '+' to the index name:
 
     $for i+, v in D:
         $i...
     $end
 
-index will be increased by one. You can't increment the map key if you iterate
-over map even if map key is integer.
+the index will be increased by one. You can't increment the map key if you
+iterate over map even if map key is integer.
 
 If there is newline after *if*, *for*, *else*, *end* statement, this new
-line isn't printed. If you want print this new line, insert this statement in
-braces:
+line isn't printed. If you want to print this new line, insert the statement
+in braces:
 
     ${for i, v in D:}
     $i,
@@ -388,7 +388,8 @@ All the text between $# and #$ is ignored: not interpreted and not printed.
 
 ## Subtemplates (nested/embedded templates)
 
-If you want modularize your templates, you can do like in folowing example:
+If you want to modularize your templates, you can do this like in folowing
+example:
 
     type Ctx struct {
         A int
@@ -419,7 +420,7 @@ Subtemplate tpl1:
 
 Subtemplate tpl2:
 
-    This template operates on context passed to it via Nested method: $S, $RT
+    This template operates on context passed to it via Nested method: $S, $T
 
 As you can see, you can use subtemplates in two ways:
 
@@ -469,7 +470,7 @@ You may set the global data once and use they together wit local data created
 each *hello()* call. Additionally, if *ld* isn't nil, the *B* field in *ld*
 will be rendered, not the *B* field in *data*.
 
-You could create a context stack using the values without internal structure:
+You could create the context stack using the values without internal structure:
 
     tpl.Run(os.Stdout, 2, "Ala", 3.14159)
 
@@ -481,4 +482,5 @@ Output:
 
     2  Ala  3.14159
 
-*@* means context stack itself and behaves like ordinary slice.
+*@* means context stack itself and behaves like ordinary slice of type
+[]interface{}.
