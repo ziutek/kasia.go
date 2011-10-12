@@ -378,7 +378,7 @@ You can return from template in any place using *return* statement. You can
 defer some output to the end of template using *defer* statement.
 
     $for i, v in S:
-        defer: $i $end
+        $defer: $i $end
         $if i > 3:
             $return
         $end
