@@ -3,7 +3,7 @@ package main
 import (
     "os"
     "fmt"
-    "template"
+    "old/template"
     "testing"
     "github.com/ziutek/kasia.go"
 )

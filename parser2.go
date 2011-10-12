@@ -11,6 +11,7 @@ const (
     IF_BLK
     FOR_BLK
     ELSE_BLK
+	DEFER_BLK
 )
 
 func parse2Param(par *interface{}, ln int) (err os.Error) {
@@ -189,6 +190,19 @@ func parse2FirstElem(in_els *[]Element) (out_el Element, err os.Error) {
         }
         out_el = el
 
+	case *ReturnElem:
+		out_el = el
+
+	case *DeferElem:
+		el.defer_block, err = parse2(in_els, DEFER_BLK)
+        if len(*in_els) == 0 {
+			// Nie znaleziono end
+			err = ParseErr{el.ln, PARSE_DEFER_NEND}
+			return
+		}
+        *in_els = (*in_els)[1:] // Usowamy end
+		out_el = el
+
     default:
         panic(fmt.Sprintf(
             "tmpl:parse2: line ? (%d) Unknown element!", el.lnum()))
@@ -218,6 +232,10 @@ func parse2(in *[]Element, blk_type int) (out []Element, err os.Error) {
             return
 
         default:
+			if _, ok := el.(*DeferElem); ok && blk_type == DEFER_BLK {
+				err = ParseErr{el.lnum(), PARSE_NESTED_DEFER}
+				return
+			}
             // Pozostale elementy parsujemy pojedynczo i dodajemy do wyjscia
             el, err = parse2FirstElem(in)
             if err != nil {

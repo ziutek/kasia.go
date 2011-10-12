@@ -4,7 +4,7 @@ import (
     "testing"
     "fmt"
     "os"
-    "template"
+    "old/template"
 )
 
 type Test struct {
@@ -286,6 +286,20 @@ func TestMethodFunc(t *testing.T) {
     tpl_txt := "$Mulf(3)(5) $Mul(3)"
     expect := "30 6"
     check(t, tpl_txt, expect, true, ctx)
+}
+
+func TestReturn(t *testing.T) {
+	ctx := map[string]int{"a": 11, "b": 22}
+	tpl_txt := "$a xx $return yy $b"
+	expect := "11 xx "
+	check(t, tpl_txt, expect, true, ctx)
+}
+
+func TestDefer(t *testing.T) {
+	ctx := []string{"a", "b", "c"}
+	tpl_txt := "$for i, v in @[0]:$defer:$i:$v $end$end"
+	expect := "2:c 1:b 0:a "
+	check(t, tpl_txt, expect, true, ctx)
 }
 
 // BENCHMARKING

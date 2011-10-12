@@ -295,7 +295,7 @@ no escaping at all.
 
 ## Control statements
 
-### 'If' statement
+### 'if' statement
 
     $if 0.0:
         Text 1
@@ -340,7 +340,7 @@ You can use braces for all statements (useful for `$end` statement):
 
     Start$if 1 < 0:AAAA$else:BBBB${end}stop.
 
-### 'For' statement
+### 'for' statement
 
     $for i, v in D:
         $i: $if i == 1:
@@ -371,6 +371,28 @@ in braces:
     ${for i, v in D:}
     $i,
     $end
+
+## 'return' and 'defer' statements
+
+You can return from template in any place using *return* statement. You can
+defer some output to the end of template using *defer* statement.
+
+    $for i, v in S:
+        defer: $i $end
+        $if i > 3:
+            $return
+        $end
+    $end
+
+If S is slice and len(S) > 3 this example prints:
+
+    3
+    2
+    1
+    0
+
+If *return* statement is in *defer* block it returns from this block, not from
+template itself.
 
 ## Comments
 
