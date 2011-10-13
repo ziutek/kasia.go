@@ -1,19 +1,19 @@
-# FAQ
+## FAQ
 
-## What is Kasia.go?
+### What is Kasia.go?
 
 Kasia.go is a Go implementation of the Kasia templating system.
 
 Kasia is primarily designed for HTML, but you can use it for anything you want.
 Its syntax is somewhat similar to the web.py templating system - Templator, but much much simpler.
 
-## What does "Kasia" mean?
+### What does "Kasia" mean?
 
 Kasia is my daughter's name (Polish equivalent of Katie or Kathy).
 
-## Installing Kasia.go
+### Installing Kasia.go
 
-### Using *goinstall* - prefered way:
+#### Using *goinstall* - prefered way:
 
     $ goinstall github.com/ziutek/kasia.go
 
@@ -23,12 +23,12 @@ After this command *kasia.go* package is ready to use. You may find source in
 
 directory. You can use `goinstall -u -a` for update all installed packages.
 
-### Using *git clone* command:
+#### Using *git clone* command:
 
     $ git clone git://github.com/ziutek/kasia.go
     $ cd kasia.go && make install
 
-### Version for Go weekly releases
+#### Version for Go weekly releases
 
 If master branch can't be compiled with Go weekly release, try clone
 Kasia.go weekly branch:
@@ -36,7 +36,7 @@ Kasia.go weekly branch:
     $ git clone -b weekly git://github.com/ziutek/kasia.go
     $ cd kasia.go && make install
 
-## Using "Kasia.go"
+### Using "Kasia.go"
 
 Kasia's native interface contains one function and three methods:
 
@@ -126,9 +126,9 @@ Example:
     // One more time, mustache.go way
     err = fmt.Println(tpl.Render(data))
 
-# Introduction to Kasia template syntax
+## Introduction to Kasia template syntax
 
-## Getting data from an array/slice
+### Getting data from an array/slice
 
 If the context is a slice or an array you can get an element
 from it like this:
@@ -143,7 +143,7 @@ In this example `$[[0]]` is a function, so we are calling it with a float argume
 Note the lack of a '$' sign for variable indexes.
 
 
-## Geting data from a struct and calling functions
+### Geting data from a struct and calling functions
 
 If the context is a struct, for example:
 
@@ -238,7 +238,7 @@ conversion before write to io.Writer.
 `fmt.Fprint()` and `fmt.Sprint()` are used to render a different type
 of variables.
 
-## Getting data from a map
+### Getting data from a map
 
 If the context is a map you can use it in a way similar to the struct context.
 If the map has string key like this:
@@ -276,7 +276,7 @@ you can only use index notation:
 The map may have a key of any type but, you can use directly (without using a
 variable) only string, int or float keys.
 
-## Escaping
+### Escaping
 
 If you create template using the `New()` function, all values are rendered HTML
 escaped by default. If you want unescaped text use ':' after the '$' sign:
@@ -293,9 +293,9 @@ parameters or indexes are always unescaped.
 If you don't use `New()` to create template, EscapeFunction is nil and there is
 no escaping at all.
 
-## Control statements
+### Control statements
 
-### 'if' statement
+#### 'if' statement
 
     $if 0.0:
         Text 1
@@ -340,7 +340,7 @@ You can use braces for all statements (useful for `$end` statement):
 
     Start$if 1 < 0:AAAA$else:BBBB${end}stop.
 
-### 'for' statement
+#### 'for' statement
 
     $for i, v in D:
         $i: $if i == 1:
@@ -372,7 +372,7 @@ in braces:
     $i,
     $end
 
-## 'return' and 'defer' statements
+### 'return' and 'defer' statements
 
 You can return from template in any place using *return* statement. You can
 defer some output to the end of template using *defer* statement.
@@ -394,7 +394,7 @@ If S is slice and len(S) > 3 this example prints:
 If *return* statement is in *defer* block it returns from this block, not from
 template itself.
 
-## Comments
+### Comments
 
 All the text between $# and #$ is ignored: not interpreted and not printed.
 
@@ -408,7 +408,7 @@ All the text between $# and #$ is ignored: not interpreted and not printed.
     $a $b
     #$
 
-## Subtemplates (nested/embedded templates)
+### Subtemplates (nested/embedded templates)
 
 If you want to modularize your templates, you can do this like in folowing
 example:
@@ -449,7 +449,7 @@ As you can see, you can use subtemplates in two ways:
 1. Render subtemplate with main context by typing `$Tpl1`.
 2. Render subtemplate with custom context: `$Tpl2.Nested(custom_context)`.
 
-## Context stack
+### Context stack
 
 You can divide the data context into two (or more) parts. For example, the first
 part of the context may be global data:
@@ -506,3 +506,7 @@ Output:
 
 *@* means context stack itself and behaves like ordinary slice of type
 []interface{}.
+
+## Package documentation
+
+[http://gopkgdoc.appspot.com/pkg/github.com/ziutek/kasia.go]
