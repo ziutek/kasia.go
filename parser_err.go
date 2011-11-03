@@ -26,7 +26,7 @@ type ParseErr struct {
     Lnum, Enum int
 }
 
-func (pe ParseErr) String() string {
+func (pe ParseErr) Error() string {
     errStr := [...]string{
         "no errors",
         "unexpected end of template",
