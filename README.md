@@ -41,8 +41,8 @@ Kasia.go weekly branch:
 Kasia's native interface contains one function and three methods:
 
     func New() *Template
-    func (*Template) Parse(str string) os.Error
-    func (*Template) Run(wr io.Writer, ctx ...interface{}) os.Error
+    func (*Template) Parse(str string) error
+    func (*Template) Run(wr io.Writer, ctx ...interface{}) error
     func (*Template) Nested(ctx ...interface{}) *NestedTemplate 
 
 The simplest example is:
@@ -85,12 +85,12 @@ example usage of Kasia.go in simple Wiki.
 
 There are a few methods/functions for Go template compatibility:
 
-    func (*Template) ParseFile(filename string) os.Error
-    func Parse(txt string) (*Template, os.Error)
+    func (*Template) ParseFile(filename string) error
+    func Parse(txt string) (*Template, error)
     func MustParse(txt string) *Template
-    func ParseFile(filename string) (*Template, os.Error)
+    func ParseFile(filename string) (*Template, error)
     func MustParseFile(filename string) (*Template)
-    func (*Template) Execute(wr io.Writer, data interface{}) os.Error
+    func (*Template) Execute(wr io.Writer, data interface{}) error
 
 one method and one function for mustache.go compatibility (they panics when
 error occurs):
@@ -100,11 +100,11 @@ error occurs):
 
 and their counterparts with error reporting (without panic):
 
-    func (*Template) RenderString(ctx ...interface{}) (string, os.Error)
-    func RenderString(txt string, strict bool, ctx ...interface{}) (string, os.Error)
+    func (*Template) RenderString(ctx ...interface{}) (string, error)
+    func RenderString(txt string, strict bool, ctx ...interface{}) (string, error)
 
-    func (*Template) RenderBytes(ctx ...interface{}) ([]byte, os.Error)
-    func RenderBytes(txt string, strict bool, ctx ...interface{}) ([]byte, os.Error)
+    func (*Template) RenderBytes(ctx ...interface{}) ([]byte, error)
+    func RenderBytes(txt string, strict bool, ctx ...interface{}) ([]byte, error)
 
 Example:
 
@@ -285,7 +285,7 @@ escaped by default. If you want unescaped text use ':' after the '$' sign:
 
 If you want to use a different escape function, define your own as:
 
-    func(io.Writer, []byte) os.Error
+    func(io.Writer, []byte) error
 
 and assign it to the Template.EscapeFunc before rendering. Variables used as
 parameters or indexes are always unescaped.
