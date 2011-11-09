@@ -172,7 +172,7 @@ func parse2FirstElem(in_els *[]Element) (out_el Element, err error) {
 			return
 		}
 		// Tutaj (*in_els)[0] moze zawierac else lub end 
-		switch stop_el := (*in_els)[0].(type) {
+		switch (*in_els)[0].(type) {
 		case *EndElem:
 			*in_els = (*in_els)[1:] // Usowamy end
 		case *ElseElem:
