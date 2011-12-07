@@ -146,7 +146,7 @@ func parse1Param(txt *[]byte, lnum *int, stab map[string]string) (par interface{
 		iv, err = strconv.Atoi(sn)
 		if err != nil {
 			var fv float64
-			fv, err = strconv.Atof64(sn)
+			fv, err = strconv.ParseFloat(sn, 64)
 			if err != nil {
 				err = ParseErr{*lnum, PARSE_BAD_FLOINT}
 				return

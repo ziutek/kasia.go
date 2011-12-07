@@ -68,19 +68,19 @@ func main() {
     data_struct.E = data_map
     data_struct.G = &data_struct
 
-    bgn := time.Nanoseconds()
+    bgn := time.Now()
     tpl, err := kasia.ParseFile("long_time.kt")
     if err != nil {
         fmt.Println(err)
         return
     }
     tpl.Strict = true
-    end := time.Nanoseconds()
-    fmt.Printf("Parsing: %d us\n", (end-bgn) / 1000)
+    end := time.Now()
+    fmt.Printf("Parsing: %s\n", end.Sub(bgn))
 
     n := 1000
     for ii := 1;; ii++ {
-        bgn := time.Nanoseconds()
+        bgn := time.Now()
         txt := ""
         for ii := 0; ii < n; ii++ {
             txt = tpl.Render(data_struct)
@@ -89,10 +89,11 @@ func main() {
                 return
             }
         }
-        end := time.Nanoseconds()
+        end := time.Now()
+		delta := end.Sub(bgn)
         fmt.Printf("Rendered %d*%d B: %.0f r/s, %.0f kB/s\n",
-            ii*n, len(txt), 1e9 * float64(n) / float64(end-bgn),
-            1e6 * float64(len(txt) * n) / float64(end-bgn))
+            ii*n, len(txt), 1e9 * float64(n) / float64(delta),
+            1e6 * float64(len(txt) * n) / float64(delta))
 
     }
 }
