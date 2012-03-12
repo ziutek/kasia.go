@@ -107,7 +107,6 @@ func argsMatch(ft reflect.Type, args []reflect.Value, method int) int {
 	for kk, av := range head_args {
 		at := ft.In(kk + method) // Typ argumentu
 		if !av.Type().AssignableTo(at) {
-			fmt.Println("normal: ", av.Type(), at)
 			return RUN_WRONG_ARG_TYP
 		}
 	}
@@ -121,7 +120,6 @@ func argsMatch(ft reflect.Type, args []reflect.Value, method int) int {
 	at := st.Elem()             // Konkretny typ argumentu dotdotdot
 	for _, av := range tail_args {
 		if !av.Type().AssignableTo(at) {
-			fmt.Println("...:", av.Type(), at)
 			return RUN_WRONG_ARG_TYP
 		}
 	}
