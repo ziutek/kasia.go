@@ -1,8 +1,8 @@
 package kasia
 
 import (
-	"reflect"
 	"fmt"
+	"reflect"
 )
 
 const (
@@ -80,9 +80,7 @@ func dereference(val *reflect.Value) {
 	}
 }
 
-// Funkcja sprawdza zgodnosc typow argumentow. Jesli to konieczne konwertuje
-// argumenty do typu interface{}. Jesli to potrzebne, funkcja odpowiednio
-// dostosowuje args dla funkcji.
+// Funkcja sprawdza zgodnosc typow argumentow.
 func argsMatch(ft reflect.Type, args []reflect.Value, method int) int {
 	if ft.NumOut() == 0 {
 		return RUN_NOT_RET
@@ -109,6 +107,7 @@ func argsMatch(ft reflect.Type, args []reflect.Value, method int) int {
 	for kk, av := range head_args {
 		at := ft.In(kk + method) // Typ argumentu
 		if !av.Type().AssignableTo(at) {
+			fmt.Println("normal: ", av.Type(), at)
 			return RUN_WRONG_ARG_TYP
 		}
 	}
@@ -122,6 +121,7 @@ func argsMatch(ft reflect.Type, args []reflect.Value, method int) int {
 	at := st.Elem()             // Konkretny typ argumentu dotdotdot
 	for _, av := range tail_args {
 		if !av.Type().AssignableTo(at) {
+			fmt.Println("...:", av.Type(), at)
 			return RUN_WRONG_ARG_TYP
 		}
 	}
@@ -140,15 +140,18 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (ret ref
 		stat = RUN_NIL_CTX
 		return
 	}
-
 	// Dereferencja nazwy
 	dereference(&name)
-
 	// Dereferencja jesli kontekst jest interfejsem
 	if ctx.Kind() == reflect.Interface {
 		ctx = ctx.Elem()
 	}
-
+	// Dereferencja argumentow jesli sa interfejsami
+	for i, a := range args {
+		if a.Kind() == reflect.Interface {
+			args[i] = a.Elem()
+		}
+	}
 	// Jesli nazwa jest stringiem probujemy znalezc metode o tej nazwie
 	if name.Kind() == reflect.String {
 		tt := ctx.Type()
