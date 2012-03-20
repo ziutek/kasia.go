@@ -13,28 +13,7 @@ Kasia is my daughter's name (Polish equivalent of Katie or Kathy).
 
 ### Installing Kasia.go
 
-#### Using *goinstall* - prefered way:
-
-    $ goinstall github.com/ziutek/kasia.go
-
-After this command *kasia.go* package is ready to use. You may find source in
-
-    $GOROOT/src/pkg/github.com/ziutek/kasia.go
-
-directory. You can use `goinstall -u -a` for update all installed packages.
-
-#### Using *git clone* command:
-
-    $ git clone git://github.com/ziutek/kasia.go
-    $ cd kasia.go && make install
-
-#### Version for Go weekly releases
-
-If master branch can't be compiled with Go weekly release, try clone
-Kasia.go weekly branch:
-
-    $ git clone -b weekly git://github.com/ziutek/kasia.go
-    $ cd kasia.go && make install
+    $ go get github.com/ziutek/kasia.go
 
 ### Using "Kasia.go"
 
@@ -83,7 +62,7 @@ See [simple_go_wiki tutorial](https://github.com/ziutek/simple_go_wiki) for
 example usage of Kasia.go in simple Wiki.
 
 
-There are a few methods/functions for Go template compatibility:
+There are a few methods/functions for old Go template compatibility:
 
     func (*Template) ParseFile(filename string) error
     func Parse(txt string) (*Template, error)
