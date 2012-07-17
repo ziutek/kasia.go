@@ -224,19 +224,32 @@ func getVarFun(ctx, name reflect.Value, args []reflect.Value, fun bool) (ret ref
 			}
 
 		case reflect.Array, reflect.Slice:
-			switch name.Kind() {
-			case reflect.Int:
-				// Zwracamy element tablicy o podanym indeksie
-				ei := int(name.Int())
-				if ei < 0 || ei >= ctx.Len() {
-					stat = RUN_INDEX_OOR
-					return
-				}
-				ctx = ctx.Index(ei)
-			default:
+			if name.Kind() != reflect.Int {
 				stat = RUN_NOT_FOUND
 				return
 			}
+			// Zwracamy element tablicy o podanym indeksie
+			ei := int(name.Int())
+			if ei < 0 || ei >= ctx.Len() {
+				stat = RUN_INDEX_OOR
+				return
+			}
+			ctx = ctx.Index(ei)
+
+		case reflect.String:
+			if name.Kind() != reflect.Int {
+				stat = RUN_NOT_FOUND
+				return
+			}
+			// Zwracamy znak o podanym indeksie
+			rs := []rune(ctx.String())
+			ei := int(name.Int())
+			if ei < 0 || ei >= len(rs) {
+				stat = RUN_INDEX_OOR
+				return
+
+			}
+			ctx = reflect.ValueOf(rs[ei])
 
 		case reflect.Invalid:
 			stat = RUN_NIL_CTX
