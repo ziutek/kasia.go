@@ -345,7 +345,7 @@ func getCmp(arg1, arg2 reflect.Value, cmp int) (tf bool, stat int) {
 		typdif := false
 		if !arg1.IsValid() || !arg2.IsValid() {
 			typdif = true
-		} else if arg1.Type() != arg2.Type() {
+		} else if !arg1.Type().ConvertibleTo(arg2.Type()) {
 			typdif = true
 		}
 		if typdif {
